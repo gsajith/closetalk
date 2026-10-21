@@ -1,5 +1,5 @@
 import XCTest
-@testable import LocalWhisperCore
+@testable import OffscriptCore
 
 final class SpacingPolicyTests: XCTestCase {
     func testNoSpaceBeforeFirstInsert() {

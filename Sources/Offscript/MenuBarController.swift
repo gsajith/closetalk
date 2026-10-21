@@ -1,5 +1,5 @@
 import AppKit
-import LocalWhisperCore
+import OffscriptCore
 import ServiceManagement
 
 enum AppState {
@@ -32,7 +32,7 @@ final class MenuBarController: NSObject {
         microphoneItem.submenu = NSMenu()
         menu.addItem(microphoneItem)
         menu.addItem(loginItem)
-        menu.addItem(NSMenuItem(title: "Quit LocalWhisper", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit Offscript", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.delegate = self
         item.menu = menu
         update(.loadingModel(progress: nil))

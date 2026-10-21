@@ -1,6 +1,6 @@
 import AVFoundation
 import CoreAudio
-import LocalWhisperCore
+import OffscriptCore
 
 /// Lists microphones and stores the user's choice in UserDefaults.
 enum MicrophoneSettings {

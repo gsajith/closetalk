@@ -1,5 +1,5 @@
 import XCTest
-@testable import LocalWhisperCore
+@testable import OffscriptCore
 
 final class MicrophoneChoiceTests: XCTestCase {
     let builtIn = Microphone(uid: "BuiltInMic", name: "MacBook Pro Microphone", isBuiltIn: true)

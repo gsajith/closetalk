@@ -2,23 +2,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "LocalWhisper",
+    name: "Offscript",
     platforms: [.macOS(.v14)],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit.git", from: "1.1.1"),
     ],
     targets: [
         // Pure logic, unit tested.
-        .target(name: "LocalWhisperCore"),
+        .target(name: "OffscriptCore"),
         // macOS glue: event tap, audio, WhisperKit, paste, menu bar.
         .executableTarget(
-            name: "LocalWhisper",
+            name: "Offscript",
             dependencies: [
-                "LocalWhisperCore",
+                "OffscriptCore",
                 .product(name: "WhisperKit", package: "WhisperKit"),
             ]
         ),
-        .testTarget(name: "LocalWhisperCoreTests", dependencies: ["LocalWhisperCore"]),
+        .testTarget(name: "OffscriptCoreTests", dependencies: ["OffscriptCore"]),
     ],
     swiftLanguageModes: [.v5]
 )

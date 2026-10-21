@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>dev.gsajith.LocalWhisper</string>
+	<string>dev.gsajith.Offscript</string>
 	<key>CFBundleName</key>
-	<string>LocalWhisper</string>
+	<string>Offscript</string>
 	<key>CFBundleDisplayName</key>
-	<string>LocalWhisper</string>
+	<string>Offscript</string>
 	<key>CFBundleExecutable</key>
-	<string>LocalWhisper</string>
+	<string>Offscript</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -21,6 +21,6 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>LocalWhisper records while you hold right Command and transcribes on this Mac.</string>
+	<string>Offscript records while you hold right Command and transcribes on this Mac.</string>
 </dict>
 </plist>

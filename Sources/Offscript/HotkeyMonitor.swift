@@ -1,5 +1,5 @@
 import AppKit
-import LocalWhisperCore
+import OffscriptCore
 
 /// Marks events we post ourselves (the Cmd+V paste) so the tap can skip them.
 let syntheticEventTag: Int64 = 0x4C57
@@ -50,7 +50,7 @@ final class HotkeyMonitor {
             CGEvent.tapEnable(tap: tap, enable: true)
             CFRunLoopRun()
         }
-        thread.name = "LocalWhisper.HotkeyTap"
+        thread.name = "Offscript.HotkeyTap"
         thread.qualityOfService = .userInteractive
         thread.start()
         return true
