@@ -60,6 +60,8 @@ final class HotkeyMonitor {
         DispatchQueue.main.async { self.onEvent(event) }
     }
 
+    private static let ownPID = Int64(ProcessInfo.processInfo.processIdentifier)
+
     private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
     private static var rightCommandIsDown: Bool {
@@ -74,6 +76,9 @@ final class HotkeyMonitor {
             // A release that happened while we were off would leave a recording running forever.
             if !Self.rightCommandIsDown { emit(.rightCommandUp(Self.now)) }
         case _ where event.getIntegerValueField(.eventSourceUserData) == syntheticEventTag:
+            break
+        case _ where type != .flagsChanged && event.getIntegerValueField(.eventTargetUnixProcessID) == Self.ownPID:
+            // Clicks and keys in our own menu can't move the cursor in the app being dictated into.
             break
         case .flagsChanged:
             guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCommandKeyCode else { return }

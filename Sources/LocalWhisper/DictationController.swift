@@ -124,7 +124,10 @@ final class DictationController {
         pendingTranscriptions += 1
         lastTranscription = Task { [previous = lastTranscription, transcriber] in
             await previous?.value
+            let started = ProcessInfo.processInfo.systemUptime
             let raw = (try? await transcriber.transcribe(samples)) ?? ""
+            let elapsed = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+            Self.log.notice("transcribed \(samples.count / 16) ms of audio in \(elapsed) ms")
             pendingTranscriptions -= 1
             if let text = TranscriptCleaner.clean(raw) {
                 let now = ProcessInfo.processInfo.systemUptime

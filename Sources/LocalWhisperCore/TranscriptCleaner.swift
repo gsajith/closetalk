@@ -14,6 +14,8 @@ public enum TranscriptCleaner {
         text = replace(
             #"[\[(]\s*(?:blank_audio|music|silence|applause|laughter|noise|inaudible|no speech)\s*[\])]"#,
             in: text, with: " ")
+        // Asterisk annotations like *sad music* or *laughs*. Must start with a letter, so 2 * 3 survives.
+        text = replace(#"\*[a-z][a-z ]{0,30}\*"#, in: text, with: " ")
 
         let fillerPattern = #"\b(?:um+|uh+|erm+|hmm+|mm+)\b[,.]?"#
         let startsWithFiller = text.range(
