@@ -1,4 +1,5 @@
 import AppKit
+import LocalWhisperCore
 import ServiceManagement
 
 enum AppState {
@@ -15,6 +16,7 @@ final class MenuBarController: NSObject {
     private let statusLine = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let accessibilityItem = NSMenuItem(
         title: "Grant Accessibility permission…", action: #selector(openAccessibilitySettings), keyEquivalent: "")
+    private let microphoneItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
     private let loginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
 
     override init() {
@@ -27,6 +29,8 @@ final class MenuBarController: NSObject {
         menu.addItem(statusLine)
         menu.addItem(accessibilityItem)
         menu.addItem(.separator())
+        microphoneItem.submenu = NSMenu()
+        menu.addItem(microphoneItem)
         menu.addItem(loginItem)
         menu.addItem(NSMenuItem(title: "Quit LocalWhisper", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.delegate = self
@@ -58,6 +62,35 @@ final class MenuBarController: NSObject {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
+    /// Rebuilt each time the menu opens so plugged-in or removed mics show up.
+    private func rebuildMicrophoneMenu() {
+        guard let submenu = microphoneItem.submenu else { return }
+        submenu.removeAllItems()
+        let preference = MicrophoneSettings.preference
+        let mics = MicrophoneSettings.available().map(\.mic)
+        let selected = preference.resolve(among: mics)
+
+        let systemDefault = NSMenuItem(title: "System default", action: #selector(selectMicrophone(_:)), keyEquivalent: "")
+        systemDefault.representedObject = MicrophonePreference.systemDefault.storageValue
+        systemDefault.state = selected == nil ? .on : .off
+        submenu.addItem(systemDefault)
+        submenu.addItem(.separator())
+
+        for mic in mics {
+            let item = NSMenuItem(title: mic.name, action: #selector(selectMicrophone(_:)), keyEquivalent: "")
+            // Choosing the built-in mic stores "built-in" rather than its UID, so it survives UID changes.
+            let choice: MicrophonePreference = mic.isBuiltIn ? .builtIn : .device(uid: mic.uid)
+            item.representedObject = choice.storageValue
+            item.state = mic == selected ? .on : .off
+            submenu.addItem(item)
+        }
+        for item in submenu.items { item.target = self }
+    }
+
+    @objc private func selectMicrophone(_ sender: NSMenuItem) {
+        MicrophoneSettings.preference = MicrophonePreference(storageValue: sender.representedObject as? String)
+    }
+
     @objc private func toggleLaunchAtLogin() {
         let service = SMAppService.mainApp
         do {
@@ -73,5 +106,6 @@ extension MenuBarController: NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         accessibilityItem.isHidden = AXIsProcessTrusted()
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        rebuildMicrophoneMenu()
     }
 }

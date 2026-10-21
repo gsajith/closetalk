@@ -1,5 +1,4 @@
 import AppKit
-import AVFoundation
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -17,6 +16,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Shows the system prompt pointing at System Settings if we're not trusted yet.
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
-        AVCaptureDevice.requestAccess(for: .audio) { _ in }
     }
 }

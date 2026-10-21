@@ -22,8 +22,13 @@ final class TranscriptCleanerTests: XCTestCase {
         XCTAssertEqual(TranscriptCleaner.clean("[Music] fix the bug"), "fix the bug")
     }
 
+    func testKeepsCodeLikeBracketsAndParens() {
+        XCTAssertEqual(TranscriptCleaner.clean("Call foo() with args[0]"), "Call foo() with args[0]")
+        XCTAssertEqual(TranscriptCleaner.clean("Use the (optional) flag"), "Use the (optional) flag")
+    }
+
     func testReturnsNilForNothingToInsert() {
-        for raw in ["", "Um.", "[BLANK_AUDIO]", " Thank you.", "Thanks for watching!", "(silence)"] {
+        for raw in ["", "Um.", "[BLANK_AUDIO]", " Thank you.", "Thanks for watching!", "(silence)", "(music)", "[ Silence ]"] {
             XCTAssertNil(TranscriptCleaner.clean(raw), "expected nil for \(raw)")
         }
     }

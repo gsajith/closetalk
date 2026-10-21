@@ -4,8 +4,10 @@ import LocalWhisperCore
 /// Marks events we post ourselves (the Cmd+V paste) so the tap can skip them.
 let syntheticEventTag: Int64 = 0x4C57
 
-/// Watches global keyboard and mouse input through a CGEvent tap and reports HotkeyEvents.
+/// Watches global keyboard and mouse input through a CGEvent tap and reports HotkeyEvents on the main thread.
 /// It's an active tap (needs Accessibility, not Input Monitoring) but passes every event through unchanged.
+/// The tap runs on its own thread: an active tap holds up every keystroke on the system until it returns,
+/// so it must never wait on the main thread (e.g. while the mic starts).
 final class HotkeyMonitor {
     private static let rightCommandKeyCode: Int64 = 54
     /// Device-dependent flag bit for the right Command key (NX_DEVICERCMDKEYMASK).
@@ -37,9 +39,25 @@ final class HotkeyMonitor {
 
         self.tap = tap
         let source = CFMachPortCreateRunLoopSource(nil, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
+        let thread = Thread {
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
+            CGEvent.tapEnable(tap: tap, enable: true)
+            CFRunLoopRun()
+        }
+        thread.name = "LocalWhisper.HotkeyTap"
+        thread.qualityOfService = .userInteractive
+        thread.start()
         return true
+    }
+
+    private func emit(_ event: HotkeyEvent) {
+        DispatchQueue.main.async { self.onEvent(event) }
+    }
+
+    private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    private static var rightCommandIsDown: Bool {
+        CGEventSource.flagsState(.combinedSessionState).rawValue & rightCommandFlag != 0
     }
 
     private func handle(type: CGEventType, event: CGEvent) {
@@ -47,15 +65,16 @@ final class HotkeyMonitor {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             // macOS turns slow or interrupted taps off; turn it back on.
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+            // A release that happened while we were off would leave a recording running forever.
+            if !Self.rightCommandIsDown { emit(.rightCommandUp(Self.now)) }
         case _ where event.getIntegerValueField(.eventSourceUserData) == syntheticEventTag:
             break
         case .flagsChanged:
             guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCommandKeyCode else { return }
-            let time = Double(event.timestamp) / 1_000_000_000
             let isDown = event.flags.rawValue & Self.rightCommandFlag != 0
-            onEvent(isDown ? .rightCommandDown(time) : .rightCommandUp(time))
+            emit(isDown ? .rightCommandDown(Self.now) : .rightCommandUp(Self.now))
         default:
-            onEvent(.otherInput)
+            emit(.otherInput)
         }
     }
 }

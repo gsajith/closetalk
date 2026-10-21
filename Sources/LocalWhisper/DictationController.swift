@@ -1,5 +1,7 @@
 import AppKit
+import AVFoundation
 import LocalWhisperCore
+import os
 
 /// Connects the hotkey to recording, transcription, and pasting, and keeps the menu bar icon in sync.
 /// Everything here runs on the main thread; only transcription runs elsewhere.
@@ -7,6 +9,10 @@ import LocalWhisperCore
 final class DictationController {
     /// Clips shorter than this are almost always accidental.
     private static let minimumSamples = 16_000 / 4
+    private static let log = Logger(subsystem: "dev.gsajith.LocalWhisper", category: "dictation")
+    /// "Talk now" once the mic is live, and a different sound when recording ends.
+    private static let startSound = NSSound(named: "Tink")
+    private static let stopSound = NSSound(named: "Pop")
 
     private let menuBar: MenuBarController
     private let recorder = Recorder()
@@ -16,13 +22,24 @@ final class DictationController {
     private var monitor: HotkeyMonitor?
     private var modelReady = false
     private var isRecording = false
+    /// Bumped per recording so a late "mic is live" callback from a cancelled recording is ignored.
+    private var recordingID = 0
     private var pendingTranscriptions = 0
+    private var micDenied = false
+    /// Transcriptions run one at a time, in order, so back-to-back dictations paste in the order spoken.
+    private var lastTranscription: Task<Void, Never>?
 
     init(menuBar: MenuBarController) {
         self.menuBar = menuBar
     }
 
     func start() {
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+            DispatchQueue.main.async {
+                self.micDenied = !granted
+                self.refreshMenu()
+            }
+        }
         loadModel()
         startMonitor()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -66,8 +83,16 @@ final class DictationController {
 
         switch action {
         case .startRecording:
+            recordingID += 1
+            let id = recordingID
+            let pressedAt = ProcessInfo.processInfo.systemUptime
             do {
-                try recorder.start()
+                try recorder.start(device: MicrophoneSettings.selectedDeviceID()) { [weak self] in
+                    guard let self, self.isRecording, self.recordingID == id else { return }
+                    let delay = Int((ProcessInfo.processInfo.systemUptime - pressedAt) * 1000)
+                    Self.log.info("mic live \(delay) ms after key down")
+                    Self.play(Self.startSound)
+                }
                 isRecording = true
             } catch {
                 menuBar.update(.error("Microphone error: \(error.localizedDescription)"))
@@ -81,6 +106,7 @@ final class DictationController {
             guard isRecording else { return }
             let samples = recorder.stop()
             isRecording = false
+            Self.play(Self.stopSound)
             if samples.count >= Self.minimumSamples { transcribe(samples) }
         }
         refreshMenu()
@@ -88,7 +114,8 @@ final class DictationController {
 
     private func transcribe(_ samples: [Float]) {
         pendingTranscriptions += 1
-        Task {
+        lastTranscription = Task { [previous = lastTranscription, transcriber] in
+            await previous?.value
             let raw = (try? await transcriber.transcribe(samples)) ?? ""
             pendingTranscriptions -= 1
             if let text = TranscriptCleaner.clean(raw) {
@@ -100,8 +127,14 @@ final class DictationController {
         }
     }
 
+    private static func play(_ sound: NSSound?) {
+        sound?.stop()
+        sound?.play()
+    }
+
     private func refreshMenu() {
         if monitor == nil { return menuBar.update(.error("Needs Accessibility permission")) }
+        if micDenied { return menuBar.update(.error("Needs Microphone permission")) }
         if !modelReady { return }
         if isRecording { menuBar.update(.recording) }
         else if pendingTranscriptions > 0 { menuBar.update(.transcribing) }

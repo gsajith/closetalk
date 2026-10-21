@@ -9,8 +9,11 @@ public enum TranscriptCleaner {
 
     public static func clean(_ raw: String) -> String? {
         var text = raw
-        // Annotations like [Music], [BLANK_AUDIO], (silence).
-        text = replace(#"\[[^\]]*\]|\([^)]*\)"#, in: text, with: " ")
+        // Whisper's sound annotations like [Music], [BLANK_AUDIO], (silence). Only known words,
+        // so dictated code like foo() or args[0] survives.
+        text = replace(
+            #"[\[(]\s*(?:blank_audio|music|silence|applause|laughter|noise|inaudible|no speech)\s*[\])]"#,
+            in: text, with: " ")
 
         let fillerPattern = #"\b(?:um+|uh+|erm+|hmm+|mm+)\b[,.]?"#
         let startsWithFiller = text.range(
