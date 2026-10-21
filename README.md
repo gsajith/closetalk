@@ -17,20 +17,32 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 
 - A Mac with Apple Silicon (M1 or later)
 - macOS 14 Sonoma or later
-- Xcode, to build it (free from the App Store)
 - About 3 GB of disk for the model
 
 ## Install
+
+1. Download [Offscript.zip](https://github.com/gsajith/offscript/releases/latest/download/Offscript.zip) and unzip it.
+2. Drag Offscript.app into Applications and open it.
+3. macOS will refuse to open it the first time, because I haven't paid Apple to notarize it. Open System Settings > Privacy & Security, scroll down, and click Open Anyway next to the Offscript message. Then open the app again.
+
+If you'd rather use Terminal, this does the same thing as step 3:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Offscript.app
+```
+
+### Build it yourself
+
+You'll need Xcode, free from the App Store.
 
 ```sh
 git clone https://github.com/gsajith/offscript.git
 cd offscript
 scripts/build-app.sh
 cp -R build/Offscript.app /Applications/
-open /Applications/Offscript.app
 ```
 
-The build script creates a local code signing certificate called "Offscript Dev" in your login keychain the first time it runs. Signing every build with the same certificate means macOS remembers your permissions when you update. If macOS asks whether codesign can use the key, click Always Allow.
+The build script creates a local code signing certificate called "Offscript Dev" in your login keychain the first time it runs. Signing every build with the same certificate means macOS remembers your permissions when you rebuild. If macOS asks whether codesign can use the key, click Always Allow.
 
 ## First launch
 
