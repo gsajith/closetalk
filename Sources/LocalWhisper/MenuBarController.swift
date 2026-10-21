@@ -37,7 +37,8 @@ final class MenuBarController: NSObject {
     func update(_ state: AppState) {
         let (symbol, text, tint): (String, String, NSColor?) = switch state {
         case .loadingModel(let p?): ("arrow.down.circle", "Downloading model… \(Int(p * 100))%", nil)
-        case .loadingModel(nil): ("arrow.down.circle", "Loading model…", nil)
+        // The first load compiles the model for the Neural Engine, which can take minutes.
+        case .loadingModel(nil): ("arrow.down.circle", "Loading model… (first launch can take several minutes)", nil)
         case .idle: ("mic", "Ready. Hold right ⌘ to dictate.", nil)
         case .recording: ("mic.fill", "Recording…", .systemRed)
         case .transcribing: ("waveform", "Transcribing…", nil)

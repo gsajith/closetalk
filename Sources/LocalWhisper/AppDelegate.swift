@@ -1,12 +1,16 @@
 import AppKit
 import AVFoundation
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBar: MenuBarController!
+    private var dictation: DictationController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         menuBar = MenuBarController()
         requestPermissions()
+        dictation = DictationController(menuBar: menuBar)
+        dictation.start()
     }
 
     private func requestPermissions() {
