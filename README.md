@@ -76,3 +76,7 @@ swift build -c release
 The log shows how long each mic took to go live and how long each transcription took. Use the full `/usr/bin/log` path, since zsh has a built-in `log` command.
 
 `Sources/OffscriptCore` holds the logic with tests: transcript cleanup, the push-to-talk state machine, spacing and mic choice. `Sources/Offscript` is the app itself: the key listener, mic capture, WhisperKit and the paste. Transcription runs on [WhisperKit](https://github.com/argmaxinc/WhisperKit).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
