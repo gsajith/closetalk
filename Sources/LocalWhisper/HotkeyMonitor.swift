@@ -12,6 +12,10 @@ final class HotkeyMonitor {
     private static let rightCommandKeyCode: Int64 = 54
     /// Device-dependent flag bit for the right Command key (NX_DEVICERCMDKEYMASK).
     private static let rightCommandFlag: UInt64 = 0x10
+    /// NX_SYSDEFINED: media and brightness keys arrive as this type, not keyDown.
+    private static let systemDefined = CGEventType(rawValue: 14)!
+    /// NX_SUBTYPE_AUX_CONTROL_BUTTONS: the media/brightness key subtype of systemDefined events.
+    private static let auxControlButtons: Int16 = 8
 
     private let onEvent: (HotkeyEvent) -> Void
     private var tap: CFMachPort?
@@ -22,7 +26,9 @@ final class HotkeyMonitor {
 
     /// Returns false when the tap can't be created, which means Accessibility isn't granted yet.
     func start() -> Bool {
-        let types: [CGEventType] = [.flagsChanged, .keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown]
+        let types: [CGEventType] = [
+            .flagsChanged, .keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel, Self.systemDefined,
+        ]
         let mask = types.reduce(CGEventMask(0)) { $0 | (1 << $1.rawValue) }
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -73,6 +79,11 @@ final class HotkeyMonitor {
             guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCommandKeyCode else { return }
             let isDown = event.flags.rawValue & Self.rightCommandFlag != 0
             emit(isDown ? .rightCommandDown(Self.now) : .rightCommandUp(Self.now))
+        case .scrollWheel:
+            // Momentum scrolling keeps firing after the fingers lift; only a real scroll counts.
+            if event.getIntegerValueField(.scrollWheelEventMomentumPhase) == 0 { emit(.otherInput) }
+        case Self.systemDefined:
+            if NSEvent(cgEvent: event)?.subtype.rawValue == Self.auxControlButtons { emit(.otherInput) }
         default:
             emit(.otherInput)
         }

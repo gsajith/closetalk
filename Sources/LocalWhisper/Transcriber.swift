@@ -21,11 +21,13 @@ actor Transcriber {
     /// Reports download progress as 0...1, then nil once the download is done and loading starts.
     func load(progress: @escaping @Sendable (Double?) -> Void) async throws {
         let folder = Self.modelFolder
-        let encoder = folder.appending(path: "AudioEncoder.mlmodelc")
-        if !FileManager.default.fileExists(atPath: encoder.path) {
+        // Written only after a download finishes, so an interrupted download resumes on the next try.
+        let doneMarker = Self.baseFolder.appending(path: "\(Self.modelVariant).complete")
+        if !FileManager.default.fileExists(atPath: doneMarker.path) {
             _ = try await WhisperKit.download(variant: Self.modelVariant, downloadBase: Self.baseFolder) { p in
                 progress(p.fractionCompleted)
             }
+            FileManager.default.createFile(atPath: doneMarker.path, contents: nil)
             progress(nil)
         }
         let config = WhisperKitConfig(

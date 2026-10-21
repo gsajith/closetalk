@@ -44,7 +44,9 @@ final class DictationController {
         startMonitor()
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
-        ) { [weak self] _ in
+        ) { [weak self] note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            Self.log.notice("spacing reset: activated \(app?.bundleIdentifier ?? "?", privacy: .public)")
             MainActor.assumeIsolated { self?.spacing.reset() }
         }
     }
@@ -58,7 +60,10 @@ final class DictationController {
                 modelReady = true
                 refreshMenu()
             } catch {
-                menuBar.update(.error("Model failed to load: \(error.localizedDescription)"))
+                // Often a dropped connection during the first download. Try again shortly.
+                Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
+                menuBar.update(.error("Model failed to load, retrying in 30 s: \(error.localizedDescription)"))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in self?.loadModel() }
             }
         }
     }
@@ -78,7 +83,10 @@ final class DictationController {
     }
 
     private func handle(_ event: HotkeyEvent) {
-        if case .otherInput = event { spacing.reset() }
+        if case .otherInput = event {
+            Self.log.notice("spacing reset: key or click")
+            spacing.reset()
+        }
         guard modelReady, let action = machine.handle(event) else { return }
 
         switch action {
@@ -90,7 +98,7 @@ final class DictationController {
                 try recorder.start(device: MicrophoneSettings.selectedDeviceID()) { [weak self] in
                     guard let self, self.isRecording, self.recordingID == id else { return }
                     let delay = Int((ProcessInfo.processInfo.systemUptime - pressedAt) * 1000)
-                    Self.log.info("mic live \(delay) ms after key down")
+                    Self.log.notice("mic live \(delay) ms after key down")
                     Self.play(Self.startSound)
                 }
                 isRecording = true
@@ -120,7 +128,9 @@ final class DictationController {
             pendingTranscriptions -= 1
             if let text = TranscriptCleaner.clean(raw) {
                 let now = ProcessInfo.processInfo.systemUptime
-                Inserter.insert(spacing.prefix(at: now) + text)
+                let prefix = spacing.prefix(at: now)
+                Self.log.notice("insert \(text.count) chars, leading space: \(!prefix.isEmpty)")
+                Inserter.insert(prefix + text)
                 spacing.recordInsert(at: now)
             }
             refreshMenu()
