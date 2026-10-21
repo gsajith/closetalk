@@ -95,7 +95,7 @@ final class DictationController {
             let id = recordingID
             let pressedAt = ProcessInfo.processInfo.systemUptime
             do {
-                try recorder.start(device: MicrophoneSettings.selectedDeviceID()) { [weak self] in
+                try recorder.start(device: MicrophoneSettings.selectedDevice()) { [weak self] in
                     guard let self, self.isRecording, self.recordingID == id else { return }
                     let delay = Int((ProcessInfo.processInfo.systemUptime - pressedAt) * 1000)
                     Self.log.notice("mic live \(delay) ms after key down")

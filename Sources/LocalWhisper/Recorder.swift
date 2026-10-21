@@ -1,82 +1,80 @@
 import AVFoundation
-import CoreAudio
 
-/// Captures the default microphone as 16 kHz mono Float samples, the format Whisper expects.
+/// Captures a microphone as 16 kHz mono Float samples, the format Whisper expects.
+/// Uses AVCaptureSession rather than AVAudioEngine: the engine caches the input format, and Bluetooth
+/// headsets change sample rate while switching into two-way mode, which made the engine throw and crash.
+/// The capture session converts to 16 kHz itself, whatever the device does.
 /// The mic is only open between start() and stop(), so the macOS mic indicator stays off when idle.
-final class Recorder {
-    private let engine = AVAudioEngine()
-    private let targetFormat = AVAudioFormat(
-        commonFormat: .pcmFormatFloat32, sampleRate: 16_000, channels: 1, interleaved: false)!
+final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
+    /// Starting and stopping block for tens of milliseconds, so they run here instead of the main thread.
+    private let sessionQueue = DispatchQueue(label: "LocalWhisper.Recorder.session")
+    private let bufferQueue = DispatchQueue(label: "LocalWhisper.Recorder.buffers")
+    private var session: AVCaptureSession?  // sessionQueue only
+
     private let lock = NSLock()
     private var samples: [Float] = []
+    private var onFirstAudio: (() -> Void)?
 
-    init() {
-        // Touching inputNode and preparing up front makes start() fast.
-        _ = engine.inputNode
-        engine.prepare()
-    }
-
-    /// `onFirstAudio` runs on the main thread once real audio arrives. With Bluetooth mics like AirPods
-    /// that can be most of a second after start(), while the headset switches into two-way mode.
-    /// `device` nil means the system default input.
-    func start(device: AudioDeviceID?, onFirstAudio: @escaping () -> Void) throws {
-        lock.withLock { samples.removeAll(keepingCapacity: true) }
-        var heardAudio = false
-        let input = engine.inputNode
-        try use(device: device ?? MicrophoneSettings.systemDefaultInputID(), on: input)
-        let inputFormat = input.outputFormat(forBus: 0)
-        guard let converter = AVAudioConverter(from: inputFormat, to: targetFormat) else {
+    /// `device` nil means the system default input. `onFirstAudio` runs on the main thread once
+    /// real audio arrives, which for Bluetooth headsets can be most of a second after start().
+    func start(device: AVCaptureDevice?, onFirstAudio: @escaping () -> Void) throws {
+        guard let device = device ?? AVCaptureDevice.default(for: .audio) else {
             throw NSError(domain: "Recorder", code: 1, userInfo: [NSLocalizedDescriptionKey: "No microphone available"])
         }
-        let ratio = targetFormat.sampleRate / inputFormat.sampleRate
-
-        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
-            guard let self else { return }
-            let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 1
-            guard let out = AVAudioPCMBuffer(pcmFormat: self.targetFormat, frameCapacity: capacity) else { return }
-            var fed = false
-            converter.convert(to: out, error: nil) { _, status in
-                if fed {
-                    status.pointee = .noDataNow
-                    return nil
-                }
-                fed = true
-                status.pointee = .haveData
-                return buffer
-            }
-            guard let channel = out.floatChannelData?[0] else { return }
-            let chunk = UnsafeBufferPointer(start: channel, count: Int(out.frameLength))
-            self.lock.withLock { self.samples.append(contentsOf: chunk) }
-            // Some devices deliver pure zeros while they spin up; wait for a non-zero sample.
-            if !heardAudio, chunk.contains(where: { $0 != 0 }) {
-                heardAudio = true
-                DispatchQueue.main.async(execute: onFirstAudio)
-            }
+        let session = AVCaptureSession()
+        let input = try AVCaptureDeviceInput(device: device)
+        let output = AVCaptureAudioDataOutput()
+        output.audioSettings = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: 16_000,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: 32,
+            AVLinearPCMIsFloatKey: true,
+            AVLinearPCMIsNonInterleaved: false,
+        ]
+        output.setSampleBufferDelegate(self, queue: bufferQueue)
+        guard session.canAddInput(input), session.canAddOutput(output) else {
+            throw NSError(domain: "Recorder", code: 2, userInfo: [NSLocalizedDescriptionKey: "Can't record from \(device.localizedName)"])
         }
-        do {
-            try engine.start()
-        } catch {
-            // Leaving the tap installed would make the next installTap crash.
-            input.removeTap(onBus: 0)
-            throw error
-        }
-    }
+        session.addInput(input)
+        session.addOutput(output)
 
-    /// Points the engine's input unit at a specific device. Only valid while the engine is stopped.
-    private func use(device: AudioDeviceID?, on input: AVAudioInputNode) throws {
-        guard var device, let unit = input.audioUnit else { return }
-        let status = AudioUnitSetProperty(
-            unit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
-            &device, UInt32(MemoryLayout<AudioDeviceID>.size))
-        if status != noErr {
-            throw NSError(domain: "Recorder", code: Int(status),
-                          userInfo: [NSLocalizedDescriptionKey: "Couldn't switch microphone (\(status))"])
+        lock.withLock {
+            samples.removeAll(keepingCapacity: true)
+            self.onFirstAudio = onFirstAudio
+        }
+        sessionQueue.async {
+            self.session = session
+            session.startRunning()
         }
     }
 
     func stop() -> [Float] {
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
-        return lock.withLock { samples }
+        sessionQueue.sync {
+            session?.stopRunning()
+            session = nil
+        }
+        bufferQueue.sync {}  // Let any buffer already in flight land.
+        return lock.withLock {
+            onFirstAudio = nil
+            return samples
+        }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let block = CMSampleBufferGetDataBuffer(sampleBuffer) else { return }
+        let length = CMBlockBufferGetDataLength(block)
+        var chunk = [Float](repeating: 0, count: length / MemoryLayout<Float>.size)
+        guard chunk.withUnsafeMutableBytes({ CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: length, destination: $0.baseAddress!) }) == noErr
+        else { return }
+
+        // Some devices deliver pure zeros while they spin up; wait for a non-zero sample.
+        let callback: (() -> Void)? = lock.withLock {
+            samples.append(contentsOf: chunk)
+            guard let pending = onFirstAudio, chunk.contains(where: { $0 != 0 }) else { return nil }
+            onFirstAudio = nil
+            return pending
+        }
+        if let callback { DispatchQueue.main.async(execute: callback) }
     }
 }
