@@ -31,6 +31,7 @@ The menu bar icon shows the state: a down arrow while loading, a mic when ready,
 
 ## Troubleshooting
 
+- **A Bluetooth mic is slow to start.** Headsets like AirPods take 0.75 to 1.5 s to switch into headset mode after a few seconds idle. Wait for the start chime, or pick the built-in mic under Microphone in the menu.
 - **Nothing happens in a terminal.** Turn off Secure Keyboard Entry (Terminal or iTerm menu). It blocks apps from seeing keystrokes.
 - **Accessibility shows as on but the menu still asks for it.** You may have granted an older build signed differently. Remove LocalWhisper from the Accessibility list with the minus button, then add it again. Builds signed with `LocalWhisper Dev` keep the grant across rebuilds.
 
@@ -39,6 +40,12 @@ The menu bar icon shows the state: a down arrow while loading, a mic when ready,
 ```sh
 swift test                                                    # unit tests for cleanup, hotkey logic, spacing
 .build/release/LocalWhisper --transcribe path/to/audio.wav    # transcribe a file and print timings
+```
+
+Timings (press to live mic, transcription time) and spacing decisions go to the system log. Use the full path, since zsh has a built-in `log`:
+
+```sh
+/usr/bin/log show --last 10m --predicate 'subsystem == "dev.gsajith.LocalWhisper"' --style compact
 ```
 
 Code layout:
