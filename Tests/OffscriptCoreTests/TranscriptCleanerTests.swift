@@ -33,6 +33,14 @@ final class TranscriptCleanerTests: XCTestCase {
         XCTAssertEqual(TranscriptCleaner.clean("Compute 2 * 3 * 4"), "Compute 2 * 3 * 4")
     }
 
+    func testKeepsMillimeters() {
+        XCTAssertEqual(TranscriptCleaner.clean("The screw is 5 mm wide"), "The screw is 5 mm wide")
+    }
+
+    func testKeepsSentenceEndAfterTrailingFiller() {
+        XCTAssertEqual(TranscriptCleaner.clean("I think so um."), "I think so.")
+    }
+
     func testReturnsNilForNothingToInsert() {
         for raw in ["", "Um.", "[BLANK_AUDIO]", " Thank you.", "Thanks for watching!", "(silence)", "(music)", "[ Silence ]"] {
             XCTAssertNil(TranscriptCleaner.clean(raw), "expected nil for \(raw)")

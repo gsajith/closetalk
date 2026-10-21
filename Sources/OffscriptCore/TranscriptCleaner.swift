@@ -17,7 +17,9 @@ public enum TranscriptCleaner {
         // Asterisk annotations like *sad music* or *laughs*. Must start with a letter, so 2 * 3 survives.
         text = replace(#"\*[a-z][a-z ]{0,30}\*"#, in: text, with: " ")
 
-        let fillerPattern = #"\b(?:um+|uh+|erm+|hmm+|mm+)\b[,.]?"#
+        // Only a following comma goes with the filler: a period may end the sentence.
+        // "mmm" needs three m's so "5 mm" survives.
+        let fillerPattern = #"\b(?:um+|uh+|erm+|hmm+|mmm+)\b,?"#
         let startsWithFiller = text.range(
             of: #"^\s*"# + fillerPattern, options: [.regularExpression, .caseInsensitive]) != nil
         text = replace(fillerPattern, in: text, with: " ")
@@ -25,6 +27,8 @@ public enum TranscriptCleaner {
         text = replace(#"\s+"#, in: text, with: " ")
         text = replace(#"\s+([,.!?;:])"#, in: text, with: "$1")
         text = text.trimmingCharacters(in: .whitespaces)
+        // A removed leading "Um." leaves its period behind.
+        text = replace(#"^[,.]\s*"#, in: text, with: "")
 
         let bare = text.lowercased().trimmingCharacters(in: .punctuationCharacters.union(.whitespaces))
         if bare.isEmpty || hallucinations.contains(bare) { return nil }

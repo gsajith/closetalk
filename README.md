@@ -7,8 +7,8 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 ## What it does
 
 - **Push to talk on right Command.** A soft chime means the mic is live. A second chime means it stopped.
-- **Pastes where you're typing.** Your clipboard is put back afterward, so whatever you had copied is still there.
-- **Leaves your shortcuts alone.** Right ⌘C, ⌘Tab and friends work as usual. A quick tap does nothing.
+- **Pastes where you're typing.** Your clipboard is put back two seconds later, so whatever you had copied is still there. Passwords copied from a password manager are the exception: Offscript leaves those off the clipboard.
+- **Leaves your shortcuts alone.** Right ⌘C, ⌘Tab and friends work as usual and paste nothing. A quick tap does nothing either. The mic does open for a moment when you press right Command, so you may see the orange mic dot flash.
 - **Keeps your words.** Offscript removes "um" and "uh" and nothing else. No AI rewrite, so `foo()` and `args[0]` come through as you said them.
 - **Spaces dictations for you.** Talk in bursts and each one lands with a space before it. Typing or clicking elsewhere resets that.
 - **Lets you pick the mic.** It uses your Mac's built-in mic by default, which starts in under 100 ms. Bluetooth headsets like AirPods take 0.75 to 1.5 s to switch into headset mode.
@@ -30,7 +30,7 @@ cp -R build/Offscript.app /Applications/
 open /Applications/Offscript.app
 ```
 
-The build script creates a local code signing certificate called "Offscript Dev" in your login keychain the first time it runs. Signing every build with the same certificate means macOS remembers your permissions when you update.
+The build script creates a local code signing certificate called "Offscript Dev" in your login keychain the first time it runs. Signing every build with the same certificate means macOS remembers your permissions when you update. If macOS asks whether codesign can use the key, click Always Allow.
 
 ## First launch
 

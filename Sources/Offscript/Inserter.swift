@@ -6,8 +6,11 @@ import AppKit
 enum Inserter {
     private static let vKeyCode: CGKeyCode = 9
     /// Long enough for a busy app to read the clipboard before we put the old contents back.
+    /// There's no signal for "the paste happened", so this errs long.
     /// User copies during this window are safe: the restore checks changeCount first.
-    private static let restoreDelay: TimeInterval = 1.0
+    private static let restoreDelay: TimeInterval = 2.0
+    /// Password managers mark copied secrets with this type.
+    private static let concealedType = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
 
     /// The user's clipboard while a restore is pending, and the changeCount of our last write.
     /// Kept across back-to-back inserts so a second insert doesn't snapshot our own transcript.
@@ -35,11 +38,19 @@ enum Inserter {
             defer { saved = nil; pendingRestore = nil }
             // If something else wrote to the clipboard in the meantime, leave it alone.
             guard pasteboard.changeCount == ourChange, let items = saved else { return }
+            // Never put a password back. A late restore could paste it somewhere, and restoring
+            // would also stop the password manager from clearing it.
+            if items.contains(where: { $0.types.contains(concealedType) }) { return }
             pasteboard.clearContents()
             if !items.isEmpty { pasteboard.writeObjects(items) }
         }
         pendingRestore = restore
         DispatchQueue.main.asyncAfter(deadline: .now() + restoreDelay, execute: restore)
+    }
+
+    /// Runs a pending restore now. Called on quit so the user's clipboard isn't lost.
+    static func flushPendingRestore() {
+        pendingRestore?.perform()
     }
 
     /// Copies every item and every type, so images and files survive, not only text.

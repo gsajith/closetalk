@@ -39,7 +39,13 @@ actor Transcriber {
             load: true,
             download: false
         )
-        whisper = try await WhisperKit(config)
+        do {
+            whisper = try await WhisperKit(config)
+        } catch {
+            // Likely a damaged download. Forget it was complete so the next retry downloads again.
+            try? FileManager.default.removeItem(at: doneMarker)
+            throw error
+        }
     }
 
     func transcribe(_ samples: [Float]) async throws -> String {

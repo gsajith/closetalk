@@ -14,8 +14,6 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/Offscript" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
-# SwiftPM resource bundles from dependencies, if any.
-find "$BIN" -maxdepth 1 -name '*.bundle' -exec cp -R {} "$APP/Contents/Resources/" \;
 
 codesign --force --deep --sign "Offscript Dev" "$APP"
 echo "Built $APP"

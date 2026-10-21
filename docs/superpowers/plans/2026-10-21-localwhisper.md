@@ -1,5 +1,7 @@
 # LocalWhisper implementation plan
 
+> Historical. Written before the rename to Offscript, under the working name LocalWhisper. The code has moved on since (for example, the recorder now uses AVCaptureSession). The README describes the app as it is.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A menu bar Mac app that records while right Command is held and pastes a local Whisper transcript at the cursor on release.

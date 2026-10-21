@@ -57,6 +57,8 @@ final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         bufferQueue.sync {}  // Let any buffer already in flight land.
         return lock.withLock {
             onFirstAudio = nil
+            // Hand the audio over and drop our copy, so it isn't kept in memory between dictations.
+            defer { samples = [] }
             return samples
         }
     }
@@ -64,6 +66,7 @@ final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let block = CMSampleBufferGetDataBuffer(sampleBuffer) else { return }
         let length = CMBlockBufferGetDataLength(block)
+        guard length > 0 else { return }
         var chunk = [Float](repeating: 0, count: length / MemoryLayout<Float>.size)
         guard chunk.withUnsafeMutableBytes({ CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: length, destination: $0.baseAddress!) }) == noErr
         else { return }

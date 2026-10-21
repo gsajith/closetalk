@@ -1,5 +1,7 @@
 # LocalWhisper design
 
+> Historical. Written before the rename to Offscript, under the working name LocalWhisper. The code has moved on since (for example, the recorder now uses AVCaptureSession). The README describes the app as it is.
+
 ## Intent
 
 A free, fully local replacement for Superwhisper and Wispr Flow. Gautham holds right Command, says a sentence or two, lets go, and the text appears at the cursor in whatever app has focus. The main targets are a terminal, VS Code, and Claude Code running in either. No subscription, no network calls for transcription, no audio leaving the machine.

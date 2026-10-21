@@ -31,7 +31,7 @@ CNF
 
 # /usr/bin/openssl is LibreSSL, whose PKCS#12 output the macOS keychain can import.
 /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
-  -config "$TMP/cert.cnf" -keyout "$TMP/key.pem" -out "$TMP/cert.pem" 2>/dev/null
+  -config "$TMP/cert.cnf" -keyout "$TMP/key.pem" -out "$TMP/cert.pem"
 /usr/bin/openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" \
   -name "$NAME" -passout pass:offscript -out "$TMP/cert.p12"
 

@@ -12,6 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dictation.start()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        Inserter.flushPendingRestore()
+    }
+
     private func requestPermissions() {
         // Shows the system prompt pointing at System Settings if we're not trusted yet.
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
