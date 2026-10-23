@@ -117,11 +117,11 @@ Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](h
 For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. After packaging, add the release zip to the appcast:
 
 ```sh
-mkdir -p updates && cp build/Closetalk.zip "updates/Closetalk <version>.zip"
+mkdir -p updates && cp build/Closetalk.zip updates/Closetalk-<version>.zip
 .build/artifacts/sparkle/Sparkle/bin/generate_appcast updates
 ```
 
-`generate_appcast` signs the zip with the key from the keychain and writes `updates/appcast.xml`. Keep the `updates` folder between releases so the feed keeps its history, then upload `appcast.xml` to closetalk.dev.
+`generate_appcast` signs the zip with the key from the keychain, makes `.delta` files for small upgrades from earlier versions, and writes `updates/appcast.xml`. Its download links point next to the feed, at `https://closetalk.dev/<file>`, so upload everything in `updates` to the root of closetalk.dev except `old_updates`, not just `appcast.xml`. Keep the `updates` folder between releases so the feed keeps its history.
 
 ## License
 

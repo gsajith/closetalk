@@ -50,7 +50,7 @@ iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 SPARKLE="$APP/Contents/Frameworks/Sparkle.framework"
 ditto "$BIN/Sparkle.framework" "$SPARKLE"
 # Its XPC services are only used by sandboxed apps, and Closetalk isn't sandboxed.
-rm -rf "$SPARKLE/Versions/B/XPCServices"
+rm -rf "$SPARKLE/Versions/B/XPCServices" "$SPARKLE/XPCServices"
 install_name_tool -add_rpath @executable_path/../Frameworks "$APP/Contents/MacOS/Closetalk"
 
 # Hardened runtime is required for notarization. It blocks the mic unless the entitlement is declared.
