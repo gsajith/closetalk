@@ -25,6 +25,15 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/Closetalk" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
 
+# App icon: assets/icon.png (rendered from assets/src/icon.html) at every size macOS asks for.
+ICONSET="$(mktemp -d)/AppIcon.iconset"
+mkdir -p "$ICONSET"
+for s in 16 32 128 256 512; do
+  sips -z "$s" "$s" assets/icon.png --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+  sips -z $((s * 2)) $((s * 2)) assets/icon.png --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+
 # Hardened runtime is required for notarization. It blocks the mic unless the entitlement is declared.
 # No --deep: the bundle has a single executable and no nested code.
 codesign --force --options runtime --entitlements Resources/Closetalk.entitlements $TIMESTAMP \
