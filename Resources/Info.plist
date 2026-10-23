@@ -22,6 +22,12 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>SUFeedURL</key>
+	<string>https://closetalk.dev/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>5N8gMUGKIcfrAqeoq1mXj/5njIVvCPF9tIp0TKOBONI=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Closetalk records while you hold right Command and transcribes on this Mac.</string>
 </dict>

@@ -6,6 +6,8 @@ let package = Package(
     platforms: [.macOS(.v14)],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit.git", from: "1.1.1"),
+        // Pinned: the signing steps in scripts/build-app.sh follow this version's framework layout.
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0"),
     ],
     targets: [
         // Pure logic, unit tested.
@@ -16,6 +18,7 @@ let package = Package(
             dependencies: [
                 "ClosetalkCore",
                 .product(name: "WhisperKit", package: "WhisperKit"),
+                .product(name: "Sparkle", package: "Sparkle"),
             ]
         ),
         .testTarget(name: "ClosetalkCoreTests", dependencies: ["ClosetalkCore"]),
