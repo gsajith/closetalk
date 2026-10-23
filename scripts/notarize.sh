@@ -23,9 +23,17 @@ trap 'rm -f "$ZIP"' EXIT
 
 # --wait blocks until Apple finishes, usually a few minutes.
 echo "Submitting to Apple..."
-RESULT=$(xcrun notarytool submit "$ZIP" --keychain-profile notary --wait --output-format json)
-ID=$(plutil -extract id raw -o - - <<<"$RESULT")
-STATUS=$(plutil -extract status raw -o - - <<<"$RESULT")
+# notarytool can exit non-zero on a rejection, so keep going and read the result either way.
+RESULT=$(xcrun notarytool submit "$ZIP" --keychain-profile notary --wait --output-format json) || true
+ID=$(plutil -extract id raw -o - - <<<"$RESULT" 2>/dev/null) || true
+STATUS=$(plutil -extract status raw -o - - <<<"$RESULT" 2>/dev/null) || true
+
+# No submission id means the upload itself failed, like a bad login or no network.
+if [ -z "$ID" ]; then
+  echo "Submission failed before Apple returned a submission id." >&2
+  [ -n "$RESULT" ] && echo "$RESULT" >&2
+  exit 1
+fi
 echo "Notarization $STATUS ($ID)"
 
 if [ "$STATUS" != "Accepted" ]; then
