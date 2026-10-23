@@ -1,0 +1,25 @@
+name: PR title
+
+# Squash merges take their subject from the PR title, so it has to be a Conventional Commit too (see
+# commitlint.config.mjs). Commits made locally are checked by the husky commit-msg hook.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Through env, not interpolated into the script, so a title can't inject shell.
+      - run: printf '%s\n' "$TITLE" | npx --no -- commitlint
+        env:
+          TITLE: ${{ github.event.pull_request.title }}

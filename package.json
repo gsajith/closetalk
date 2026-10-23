@@ -1,0 +1,13 @@
+{
+  "name": "closetalk",
+  "private": true,
+  "description": "Dev tooling only: commitlint and husky check Conventional Commit messages. The app is built with Swift.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.5.3",
+    "@commitlint/config-conventional": "20.5.3",
+    "husky": "9.1.7"
+  }
+}

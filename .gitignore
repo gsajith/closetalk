@@ -3,3 +3,4 @@ build/
 .superpowers/
 .DS_Store
 .claude/worktrees/
+node_modules
