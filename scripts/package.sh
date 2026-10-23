@@ -25,6 +25,11 @@ fi
 TIMESTAMP=""
 if [[ "$IDENTITY" == "Developer ID Application"* ]]; then
   TIMESTAMP="--timestamp"
+  # Without the stapled ticket, the app in the DMG and zip only passes Gatekeeper online.
+  if ! xcrun stapler validate -q "$APP"; then
+    echo "$APP isn't notarized yet. Run scripts/notarize.sh first." >&2
+    exit 1
+  fi
 fi
 
 STAGING=$(mktemp -d)
