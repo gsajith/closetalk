@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Source for assets/icon.png, the master app icon. Render with scripts/render-assets.sh. -->
+<!-- Apple's macOS icon grid: a 1024px canvas with an 824px rounded-square body and a soft shadow. -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="render" content="1024x1024@1">
+<style>
+  * { margin: 0; padding: 0; }
+  html, body { width: 1024px; height: 1024px; background: transparent; }
+  svg { display: block; }
+  .body { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.3)); }
+</style>
+</head>
+<body>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- Superellipse (n = 5), close to Apple's continuous-corner icon shape. -->
+    <path id="shape" transform="translate(100 100)" d="M824.0 412.0 L823.8 538.6 L823.1 579.0 L822.0 608.2 L820.4 631.8 L818.3 651.9 L815.8 669.6 L812.8 685.3 L809.4 699.5 L805.4 712.4 L801.0 724.2 L796.0 735.1 L790.5 745.1 L784.5 754.3 L777.9 762.8 L770.7 770.7 L762.8 777.9 L754.3 784.5 L745.1 790.5 L735.1 796.0 L724.2 801.0 L712.4 805.4 L699.5 809.4 L685.3 812.8 L669.6 815.8 L651.9 818.3 L631.8 820.4 L608.2 822.0 L579.0 823.1 L538.6 823.8 L412.0 824.0 L285.4 823.8 L245.0 823.1 L215.8 822.0 L192.2 820.4 L172.1 818.3 L154.4 815.8 L138.7 812.8 L124.5 809.4 L111.6 805.4 L99.8 801.0 L88.9 796.0 L78.9 790.5 L69.7 784.5 L61.2 777.9 L53.3 770.7 L46.1 762.8 L39.5 754.3 L33.5 745.1 L28.0 735.1 L23.0 724.2 L18.6 712.4 L14.6 699.5 L11.2 685.3 L8.2 669.6 L5.7 651.9 L3.6 631.8 L2.0 608.2 L0.9 579.0 L0.2 538.6 L0.0 412.0 L0.2 285.4 L0.9 245.0 L2.0 215.8 L3.6 192.2 L5.7 172.1 L8.2 154.4 L11.2 138.7 L14.6 124.5 L18.6 111.6 L23.0 99.8 L28.0 88.9 L33.5 78.9 L39.5 69.7 L46.1 61.2 L53.3 53.3 L61.2 46.1 L69.7 39.5 L78.9 33.5 L88.9 28.0 L99.8 23.0 L111.6 18.6 L124.5 14.6 L138.7 11.2 L154.4 8.2 L172.1 5.7 L192.2 3.6 L215.8 2.0 L245.0 0.9 L285.4 0.2 L412.0 0.0 L538.6 0.2 L579.0 0.9 L608.2 2.0 L631.8 3.6 L651.9 5.7 L669.6 8.2 L685.3 11.2 L699.5 14.6 L712.4 18.6 L724.2 23.0 L735.1 28.0 L745.1 33.5 L754.3 39.5 L762.8 46.1 L770.7 53.3 L777.9 61.2 L784.5 69.7 L790.5 78.9 L796.0 88.9 L801.0 99.8 L805.4 111.6 L809.4 124.5 L812.8 138.7 L815.8 154.4 L818.3 172.1 L820.4 192.2 L822.0 215.8 L823.1 245.0 L823.8 285.4 Z"/>
+    <clipPath id="clip"><use href="#shape"/></clipPath>
+  </defs>
+  <g class="body">
+    <g clip-path="url(#clip)">
+      <rect x="100" y="100" width="824" height="824" fill="#f2eadf"/>
+      <!-- icon-art.jpg is 2048px square; this places the mic head near the top and lets the stand run off the bottom edge. -->
+      <image href="icon-art.jpg" x="4" y="41" width="1024" height="1024"/>
+    </g>
+    <use href="#shape" fill="none" stroke="rgba(74, 20, 125, 0.12)" stroke-width="2"/>
+  </g>
+</svg>
+</body>
+</html>

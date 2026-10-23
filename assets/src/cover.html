@@ -1,92 +1,59 @@
 <!doctype html>
-<!-- Source for assets/cover.png. Render with scripts/render-assets.sh. -->
+<!-- Source for assets/cover.jpg. Render with scripts/render-assets.sh. -->
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="render-format" content="jpg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,800&display=block">
 <style>
+  /* The two Riso inks and paper, sampled from cover-art.jpg. */
   :root {
-    --bg: #15130f;
-    --ink: #f3ede2;
-    --muted: #9b9282;
-    --accent: #ffb547;
-    --key: #26221c;
-    --key-edge: #3a342b;
-    --term: #0d0c0a;
+    --paper: #f2eadf;
+    --pink: #ed269d;
+    --blue: #1c81c3;
+    --purple: #4a147d; /* where pink and blue overprint */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1280px; height: 640px; }
   body {
-    background:
-      radial-gradient(900px 500px at 20% 110%, rgba(255, 181, 71, 0.16), transparent 70%),
-      radial-gradient(700px 400px at 95% -10%, rgba(255, 181, 71, 0.08), transparent 70%),
-      var(--bg);
-    color: var(--ink);
-    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden; background: var(--paper);
+    font-family: "Bricolage Grotesque", "Helvetica Neue", sans-serif;
   }
-  .title {
-    position: absolute; left: 88px; top: 84px;
-  }
-  h1 {
-    font-size: 104px; font-weight: 700; letter-spacing: -4px; line-height: 1;
-  }
-  .tagline {
-    margin-top: 22px; font-size: 30px; color: var(--muted); letter-spacing: -0.3px; line-height: 1.35;
-  }
-  .tagline b { color: var(--ink); font-weight: 600; }
+  .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 97% center; }
+  .ink { filter: url(#ink); mix-blend-mode: multiply; }
 
-  .flow {
-    position: absolute; left: 88px; right: 88px; bottom: 92px;
-    display: flex; align-items: center; gap: 36px;
-  }
-  .key {
-    flex: none; width: 150px; height: 150px; border-radius: 26px;
-    background: linear-gradient(180deg, #2d2821, var(--key));
-    border: 2px solid var(--key-edge);
-    box-shadow: 0 3px 0 #0a0907, 0 0 0 6px rgba(255, 181, 71, 0.18), 0 0 60px rgba(255, 181, 71, 0.25);
-    transform: translateY(4px);
-    display: flex; flex-direction: column; justify-content: space-between; padding: 18px 20px;
-  }
-  .key .glyph { font-size: 64px; line-height: 1; color: var(--accent); }
-  .key .label { font-size: 20px; color: var(--muted); align-self: flex-end; }
+  /* The wordmark is printed twice, like a two-plate Riso run with the plates slightly out of register. */
+  .word { position: absolute; left: 84px; top: 70px; font-size: 118px; font-weight: 800; letter-spacing: -5px; line-height: 1; }
+  .word span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+  .word .pink { color: var(--pink); transform: translate(-5px, 4px); }
+  .word .blue { color: var(--blue); position: relative; }
 
-  .wave { flex: none; display: flex; align-items: center; gap: 7px; height: 120px; }
-  .wave i { display: block; width: 8px; border-radius: 4px; background: var(--accent); }
-
-  .term {
-    flex: 1; min-width: 0; height: 150px; border-radius: 16px; background: var(--term);
-    border: 1px solid #2b2620; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
-    overflow: hidden;
+  .headline {
+    position: absolute; left: 88px; top: 232px; width: 690px;
+    font-size: 50px; font-weight: 600; line-height: 1.08; letter-spacing: -1.4px; color: var(--purple);
   }
-  .term .bar { height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid #221e19; }
-  .term .bar span { width: 12px; height: 12px; border-radius: 50%; background: #3a342b; }
-  .term .body {
-    padding: 26px 26px; font-family: "SF Mono", Menlo, monospace; font-size: 25px; white-space: nowrap;
+  .sub {
+    position: absolute; left: 88px; bottom: 74px; width: 700px;
+    font-size: 24px; font-weight: 500; line-height: 1.35; color: var(--purple);
   }
-  .prompt { color: var(--accent); margin-right: 14px; }
-  .cursor { display: inline-block; width: 13px; height: 29px; background: var(--ink); vertical-align: -5px; margin-left: 3px; }
 </style>
 </head>
 <body>
-  <div class="title">
-    <h1>Closetalk</h1>
-    <p class="tagline">Hold right ⌘ and talk. Let go and it types.<br><b>Runs on your Mac. Free.</b></p>
-  </div>
+  <img class="art" src="cover-art.jpg" alt="">
 
-  <div class="flow">
-    <div class="key"><span class="glyph">⌘</span><span class="label">right</span></div>
-    <div class="wave" id="wave"></div>
-    <div class="term">
-      <div class="bar"><span></span><span></span><span></span></div>
-      <div class="body"><span class="prompt">❯</span>fix the flaky auth test and rerun it<span class="cursor"></span></div>
-    </div>
-  </div>
+  <div class="word"><span class="pink ink">Closetalk</span><span class="blue ink">Closetalk</span></div>
+  <p class="headline ink">Talk to your agents like they're sitting next to you.</p>
+  <p class="sub ink">Hold right ⌘, say the prompt, let go. Free, and it runs on your Mac, so nothing you say reaches a server.</p>
 
-  <script>
-    // Fixed heights so every render is identical.
-    const heights = [18, 34, 62, 96, 70, 112, 84, 48, 90, 58, 30, 16];
-    document.getElementById('wave').innerHTML = heights.map(h => `<i style="height:${h}px"></i>`).join('');
-  </script>
+  <!-- Ink grain: roughens the edges a little and knocks small specks out of the solids. -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="ink" x="-5%" y="-10%" width="110%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="warp"/>
+      <feDisplacementMap in="SourceGraphic" in2="warp" scale="2.5" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="2" result="grain"/>
+      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 2.6" result="mask"/>
+      <feComposite in="rough" in2="mask" operator="in"/>
+    </filter>
+  </svg>
 </body>
 </html>

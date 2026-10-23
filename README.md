@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/cover.png" alt="Closetalk: hold right Command and talk, let go and it types" width="100%"></p>
+<p align="center"><img src="assets/cover.jpg" alt="Closetalk: talk to your agents like they're sitting next to you" width="100%"></p>
 
 Closetalk is push-to-talk dictation for your Mac. Hold the right Command key, say what you want, and let go. About a second later the text appears wherever your cursor is: a terminal, VS Code, Claude Code, Slack, a browser.
 

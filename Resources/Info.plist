@@ -8,6 +8,8 @@
 	<string>Closetalk</string>
 	<key>CFBundleDisplayName</key>
 	<string>Closetalk</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleExecutable</key>
 	<string>Closetalk</string>
 	<key>CFBundlePackageType</key>
