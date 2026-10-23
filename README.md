@@ -21,8 +21,8 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 
 ## Install
 
-1. Download [Closetalk.zip](https://github.com/gsajith/closetalk/releases/latest/download/Closetalk.zip) and unzip it.
-2. Drag Closetalk.app into Applications and open it.
+1. Download [Closetalk.dmg](https://github.com/gsajith/closetalk/releases/latest/download/Closetalk.dmg), open it, and drag Closetalk into the Applications folder next to it.
+2. Open Closetalk from Applications.
 3. macOS will refuse to open it the first time, because I haven't paid Apple to notarize it. Open System Settings > Privacy & Security, scroll down, and click Open Anyway next to the Closetalk message. Then open the app again.
 
 If you'd rather use Terminal, this does the same thing as step 3:
@@ -97,14 +97,16 @@ Release builds are signed with a Developer ID certificate and notarized by Apple
 xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
 ```
 
-Then build, notarize and staple:
+Then build and notarize the app, package it, and notarize the DMG:
 
 ```sh
 SIGN_IDENTITY="Developer ID Application: <Name> (<Team ID>)" scripts/build-app.sh
 scripts/notarize.sh
+scripts/package.sh
+scripts/notarize.sh build/Closetalk.dmg
 ```
 
-Apple usually answers within a few minutes. If it rejects the build, the script prints Apple's log.
+That leaves `build/Closetalk.dmg` and `build/Closetalk.zip` ready to upload. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log.
 
 ## License
 
