@@ -1,5 +1,5 @@
 {
-  "name": "offscript",
+  "name": "closetalk",
   "private": true,
   "description": "Dev tooling only: commitlint and husky check Conventional Commit messages. The app is built with Swift.",
   "scripts": {
