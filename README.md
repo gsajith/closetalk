@@ -103,7 +103,7 @@ To cut a release, bump `CFBundleShortVersionString` and `CFBundleVersion` in `Re
 scripts/release.sh <version>
 ```
 
-It refuses to run on uncommitted or unpushed changes, a version that doesn't match `Info.plist`, a release that already exists, or a build number already in the update feed. Then it runs these, which also work one at a time:
+It refuses to run on uncommitted or unpushed changes, a version that doesn't match `Info.plist`, a release that already exists, or a build number that isn't higher than the latest one in the update feed. Then it runs these, which also work one at a time:
 
 ```sh
 SIGN_IDENTITY="Developer ID Application: <Name> (<Team ID>)" scripts/build-app.sh
@@ -112,7 +112,7 @@ scripts/package.sh
 scripts/notarize.sh build/Closetalk.dmg
 ```
 
-Finally it adds the update to the feed (see Updates below) and creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`. Review the notes, publish the release, and upload the files it lists to closetalk.dev. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
+Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, and upload the files it lists to closetalk.dev. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
 
 Self-signed builds turn off hardened runtime's library validation, because macOS only loads Sparkle.framework from the same Apple Team ID and a self-signed certificate has none. Developer ID builds keep it on.
 

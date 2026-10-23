@@ -1,6 +1,6 @@
 #!/bin/bash
-# Cuts a release from main: builds with the Developer ID, notarizes the app and DMG, adds the update
-# to updates/appcast.xml and creates a draft GitHub release to review before publishing.
+# Cuts a release from main: builds with the Developer ID, notarizes the app and DMG, creates a draft
+# GitHub release to review before publishing, then adds the update to updates/appcast.xml.
 #   scripts/release.sh 1.1
 # Bump CFBundleShortVersionString and CFBundleVersion in Resources/Info.plist through a PR first.
 # SIGN_IDENTITY overrides the signing certificate. ALLOW_BRANCH=1 skips the main-branch check, for
@@ -35,7 +35,9 @@ if gh release view "v$VERSION" >/dev/null 2>&1; then
   fail "Release v$VERSION already exists. If it's a draft left by a failed run, delete it with
 gh release delete v$VERSION and run this again."
 fi
-# Sparkle only offers an update with a higher build number than the installed one.
+# Sparkle only offers an update with a higher build number than the installed one. A plain integer
+# keeps that comparison simple.
+[[ "$BUILD" =~ ^[0-9]+$ ]] || fail "CFBundleVersion is $BUILD. Use a whole number, like 2."
 if [ -f "$APPCAST" ]; then
   LATEST=$(sed -n 's|.*<sparkle:version>\([0-9]*\)</sparkle:version>.*|\1|p' "$APPCAST" | sort -n | tail -1)
   if [ -n "$LATEST" ] && [ "$BUILD" -le "$LATEST" ]; then
