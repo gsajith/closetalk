@@ -5,3 +5,6 @@ build/
 .claude/worktrees/
 node_modules
 updates/
+.impeccable/review/
+.playwright-mcp/
+.impeccable/questions/
