@@ -97,7 +97,13 @@ Release builds are signed with a Developer ID certificate and notarized by Apple
 xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
 ```
 
-Then build and notarize the app, package it, and notarize the DMG:
+To cut a release, bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist` through a PR. Once it's merged, run this on an up-to-date main:
+
+```sh
+scripts/release.sh <version>
+```
+
+It refuses to run on uncommitted or unpushed changes, a version that doesn't match `Info.plist`, a release that already exists, or a build number that isn't higher than the latest one in the update feed. Then it runs these, which also work one at a time:
 
 ```sh
 SIGN_IDENTITY="Developer ID Application: <Name> (<Team ID>)" scripts/build-app.sh
@@ -106,7 +112,7 @@ scripts/package.sh
 scripts/notarize.sh build/Closetalk.dmg
 ```
 
-That leaves `build/Closetalk.dmg` and `build/Closetalk.zip` ready to upload. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log.
+Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, and upload the files it lists to closetalk.dev. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
 
 Self-signed builds turn off hardened runtime's library validation, because macOS only loads Sparkle.framework from the same Apple Team ID and a self-signed certificate has none. Developer ID builds keep it on.
 
@@ -114,14 +120,14 @@ Self-signed builds turn off hardened runtime's library validation, because macOS
 
 Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](https://sparkle-project.org), and from Check for Updates in the menu. Sparkle installs an update only when it's signed with the private key in the login keychain, which matches `SUPublicEDKey` in `Resources/Info.plist`.
 
-For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. After packaging, add the release zip to the appcast:
+For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. `scripts/release.sh` adds the release zip to the appcast like this:
 
 ```sh
 mkdir -p updates && cp build/Closetalk.zip updates/Closetalk-<version>.zip
 .build/artifacts/sparkle/Sparkle/bin/generate_appcast updates
 ```
 
-`generate_appcast` signs the zip with the key from the keychain, makes `.delta` files for small upgrades from earlier versions, and writes `updates/appcast.xml`. Its download links point next to the feed, at `https://closetalk.dev/<file>`, so upload everything in `updates` to the root of closetalk.dev except `old_updates`, not just `appcast.xml`. Keep the `updates` folder between releases so the feed keeps its history.
+`generate_appcast` signs the zip with the key from the keychain, makes `.delta` files for small upgrades from earlier versions, and writes `updates/appcast.xml`. Its download links point next to the feed, at `https://closetalk.dev/<file>`, so upload everything in `updates` to the root of closetalk.dev except `old_updates`, not just `appcast.xml`. Keep the `updates` folder between releases so the feed keeps its history. It's gitignored, so it lives only in your checkout.
 
 ## License
 
