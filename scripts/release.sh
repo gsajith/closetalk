@@ -15,6 +15,9 @@ APPCAST=updates/appcast.xml
 
 fail() { echo "$1" >&2; exit 1; }
 
+# Checked first: otherwise a gh login problem would only show up after the build and notarization.
+gh auth status >/dev/null 2>&1 || fail "gh isn't logged in. Run gh auth login first."
+
 # The release has to match a commit on GitHub, so build only a clean, pushed checkout.
 if [ "${ALLOW_BRANCH:-}" != 1 ] && [ "$(git branch --show-current)" != main ]; then
   fail "Releases come from main. Switch to main first."
@@ -29,11 +32,15 @@ BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
 [ "$SHORT_VERSION" = "$VERSION" ] ||
   fail "$PLIST says version $SHORT_VERSION, not $VERSION. Bump it through a PR first."
 if gh release view "v$VERSION" >/dev/null 2>&1; then
-  fail "Release v$VERSION already exists."
+  fail "Release v$VERSION already exists. If it's a draft left by a failed run, delete it with
+gh release delete v$VERSION and run this again."
 fi
-# Sparkle compares the build number, so a release that reuses one would never be offered.
-if [ -f "$APPCAST" ] && grep -q "<sparkle:version>$BUILD</sparkle:version>" "$APPCAST"; then
-  fail "Build $BUILD is already in $APPCAST. Bump CFBundleVersion through a PR first."
+# Sparkle only offers an update with a higher build number than the installed one.
+if [ -f "$APPCAST" ]; then
+  LATEST=$(sed -n 's|.*<sparkle:version>\([0-9]*\)</sparkle:version>.*|\1|p' "$APPCAST" | sort -n | tail -1)
+  if [ -n "$LATEST" ] && [ "$BUILD" -le "$LATEST" ]; then
+    fail "Build $BUILD isn't higher than build $LATEST in $APPCAST. Bump CFBundleVersion through a PR first."
+  fi
 fi
 
 echo "Releasing Closetalk $VERSION (build $BUILD) from $(git rev-parse --short HEAD)"
@@ -43,12 +50,14 @@ scripts/package.sh
 scripts/notarize.sh build/Closetalk.dmg
 spctl -a -t open --context context:primary-signature build/Closetalk.dmg
 
+# The draft comes before the feed: if the feed step fails, deleting the draft is enough to retry.
+# The other way round, a failed upload would leave a feed entry that blocks the next run.
+gh release create "v$VERSION" build/Closetalk.dmg build/Closetalk.zip --draft \
+  --target "$(git rev-parse HEAD)" --title "Closetalk $VERSION" --generate-notes
+
 mkdir -p updates
 cp build/Closetalk.zip "updates/Closetalk-$VERSION.zip"
 .build/artifacts/sparkle/Sparkle/bin/generate_appcast updates
-
-gh release create "v$VERSION" build/Closetalk.dmg build/Closetalk.zip --draft \
-  --target "$(git rev-parse HEAD)" --title "Closetalk $VERSION" --generate-notes
 
 cat <<EOF
 
