@@ -97,14 +97,16 @@ Release builds are signed with a Developer ID certificate and notarized by Apple
 xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
 ```
 
-Then build, notarize and staple:
+Then build and notarize the app, package it, and notarize the DMG:
 
 ```sh
 SIGN_IDENTITY="Developer ID Application: <Name> (<Team ID>)" scripts/build-app.sh
 scripts/notarize.sh
+scripts/package.sh
+scripts/notarize.sh build/Closetalk.dmg
 ```
 
-Apple usually answers within a few minutes. If it rejects the build, the script prints Apple's log.
+That leaves `build/Closetalk.dmg` and `build/Closetalk.zip` ready to upload. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log.
 
 ## License
 
