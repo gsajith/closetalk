@@ -61,6 +61,7 @@ Everything else is open: the README's first-person maker voice, the right ⌘ ke
 - `assets/cover.png`, rendered from `assets/src/cover.html`: current cover image.
 - Measured facts usable in copy: text appears about a second after release; built-in mic goes live in under 100 ms; Bluetooth headsets take 0.75 to 1.5 s; model is a 1.5 GB download and about 3 GB on disk; first-launch compile took about 11 minutes on an M1 Max.
 - License: MIT. Source: github.com/gsajith/closetalk.
+- Competitor facts used in the landing page FAQ, checked 2026-10-23 on the vendors' own pages. Wispr Flow: "Transcription always happens in the cloud" (wisprflow.ai/privacy); free plan "2,000/week on desktop" (wisprflow.ai/pricing). Superwhisper (superwhisper.com): free includes "Unlimited use of Whisper models"; Pro adds "Unlimited use of Cloud and Local AI models", own API keys, translation and file transcription. Re-check before launch and whenever the FAQ changes.
 - Absent, never fabricate: user counts, download numbers, GitHub stars, testimonials, press, accuracy benchmarks, comparison benchmarks against Superwhisper or Wispr Flow.
 
 ## Product Principles
