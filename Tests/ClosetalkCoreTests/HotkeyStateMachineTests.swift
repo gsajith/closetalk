@@ -1,5 +1,5 @@
 import XCTest
-@testable import OffscriptCore
+@testable import ClosetalkCore
 
 final class HotkeyStateMachineTests: XCTestCase {
     func testHoldThenReleaseFinishes() {

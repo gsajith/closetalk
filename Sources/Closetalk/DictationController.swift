@@ -1,6 +1,6 @@
 import AppKit
 import AVFoundation
-import OffscriptCore
+import ClosetalkCore
 import os
 
 /// Connects the hotkey to recording, transcription, and pasting, and keeps the menu bar icon in sync.
@@ -9,7 +9,7 @@ import os
 final class DictationController {
     /// Clips shorter than this are almost always accidental.
     private static let minimumSamples = 16_000 / 4
-    private static let log = Logger(subsystem: "dev.gsajith.Offscript", category: "dictation")
+    private static let log = Logger(subsystem: "dev.gsajith.Closetalk", category: "dictation")
     /// "Talk now" once the mic is live, and a different sound when recording ends.
     private static let startSound = NSSound(named: "Tink")
     private static let stopSound = NSSound(named: "Pop")

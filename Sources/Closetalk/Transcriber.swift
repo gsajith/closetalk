@@ -9,7 +9,7 @@ actor Transcriber {
 
     private static var baseFolder: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appending(path: "Offscript/models")
+            .appending(path: "Closetalk/models")
     }
 
     /// Where WhisperKit's downloader puts this variant under baseFolder.

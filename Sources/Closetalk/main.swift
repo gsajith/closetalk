@@ -1,6 +1,6 @@
 import AppKit
 
-// Debug path: `Offscript --transcribe <file>` prints the transcript and timing, then exits.
+// Debug path: `Closetalk --transcribe <file>` prints the transcript and timing, then exits.
 if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--transcribe" {
     let path = CommandLine.arguments[2]
     let done = DispatchSemaphore(value: 0)

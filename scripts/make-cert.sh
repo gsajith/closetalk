@@ -1,10 +1,10 @@
 #!/bin/bash
-# Creates a self-signed code signing certificate named "Offscript Dev" in the login keychain.
+# Creates a self-signed code signing certificate named "Closetalk Dev" in the login keychain.
 # Signing every build with the same identity lets macOS remember the Accessibility grant across rebuilds.
 # Safe to run more than once.
 set -euo pipefail
 
-NAME="Offscript Dev"
+NAME="Closetalk Dev"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
 # No -v: the certificate is untrusted, which codesign accepts.
@@ -33,9 +33,9 @@ CNF
 /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -config "$TMP/cert.cnf" -keyout "$TMP/key.pem" -out "$TMP/cert.pem"
 /usr/bin/openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" \
-  -name "$NAME" -passout pass:offscript -out "$TMP/cert.p12"
+  -name "$NAME" -passout pass:closetalk -out "$TMP/cert.p12"
 
 # -T lets codesign use the key without a keychain prompt.
-security import "$TMP/cert.p12" -k "$KEYCHAIN" -P offscript -T /usr/bin/codesign
+security import "$TMP/cert.p12" -k "$KEYCHAIN" -P closetalk -T /usr/bin/codesign
 
 echo "Created signing identity \"$NAME\"."

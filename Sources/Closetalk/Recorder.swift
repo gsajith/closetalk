@@ -7,8 +7,8 @@ import AVFoundation
 /// The mic is only open between start() and stop(), so the macOS mic indicator stays off when idle.
 final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     /// Starting and stopping block for tens of milliseconds, so they run here instead of the main thread.
-    private let sessionQueue = DispatchQueue(label: "Offscript.Recorder.session")
-    private let bufferQueue = DispatchQueue(label: "Offscript.Recorder.buffers")
+    private let sessionQueue = DispatchQueue(label: "Closetalk.Recorder.session")
+    private let bufferQueue = DispatchQueue(label: "Closetalk.Recorder.buffers")
     private var session: AVCaptureSession?  // sessionQueue only
 
     private let lock = NSLock()
