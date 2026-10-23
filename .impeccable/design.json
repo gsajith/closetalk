@@ -1,0 +1,341 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T00:00:00Z",
+  "title": "Design System: Closetalk",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Uncoated Paper",
+        "canonical": "oklch(94.0% 0.017 76.1)",
+        "tonalRamp": [
+          "#0f0a04",
+          "#2a241c",
+          "#474138",
+          "#676057",
+          "#888177",
+          "#aba499",
+          "#d0c8bd",
+          "#f5ede2"
+        ]
+      },
+      "paper-light": {
+        "role": "neutral",
+        "displayName": "Bright Paper",
+        "canonical": "oklch(96.6% 0.012 79.8)",
+        "tonalRamp": [
+          "#0e0b06",
+          "#28241f",
+          "#45413b",
+          "#65615a",
+          "#86827b",
+          "#a9a49d",
+          "#cdc8c1",
+          "#f3eee6"
+        ]
+      },
+      "pink": {
+        "role": "primary",
+        "displayName": "Fluorescent Pink",
+        "canonical": "oklch(63.5% 0.246 350.8)",
+        "tonalRamp": [
+          "#1f000f",
+          "#49002c",
+          "#78034c",
+          "#ac0b6f",
+          "#e31495",
+          "#fd66b5",
+          "#fdaed2",
+          "#ffe7f1"
+        ]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Riso Blue",
+        "canonical": "oklch(58.1% 0.133 244.0)",
+        "tonalRamp": [
+          "#000c1e",
+          "#002743",
+          "#00466f",
+          "#0366a0",
+          "#2889cc",
+          "#51adf2",
+          "#97d0ff",
+          "#e1f1ff"
+        ]
+      },
+      "purple": {
+        "role": "tertiary",
+        "displayName": "Overprint Purple",
+        "canonical": "oklch(34.6% 0.161 301.2)",
+        "tonalRamp": [
+          "#13002a",
+          "#33005e",
+          "#532087",
+          "#7244ac",
+          "#9467d2",
+          "#b78af9",
+          "#d4bbfe",
+          "#f1ebff"
+        ]
+      },
+      "purple-2": {
+        "role": "neutral",
+        "displayName": "Thin Purple",
+        "canonical": "oklch(43.4% 0.108 305.1)",
+        "tonalRamp": [
+          "#150029",
+          "#32104e",
+          "#50306f",
+          "#705092",
+          "#9271b6",
+          "#b593dc",
+          "#d8b9fd",
+          "#f3eafe"
+        ]
+      },
+      "purple-deep": {
+        "role": "tertiary",
+        "displayName": "Deep Overprint",
+        "canonical": "oklch(29.9% 0.138 300.8)",
+        "tonalRamp": [
+          "#13002a",
+          "#32015c",
+          "#50297e",
+          "#6f4aa2",
+          "#916cc8",
+          "#b48fee",
+          "#d3bbff",
+          "#f1ebff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline only, printed through #ink."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings, printed in two off-register plates."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The two-plate Closetalk wordmark in the masthead; scaled up on the README cover."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Diagram callout titles; sized in container units off the 1200x500 stage."
+      },
+      "question": {
+        "displayName": "Question",
+        "purpose": "FAQ summary rows."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The line under the hero headline, in Thin Purple."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default reading text."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Requirements, captions, colophon."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase terms in the fact sheet only."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "The printed Download button label, knocked out to paper."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Pink step counters printed through #ink."
+      }
+    },
+    "shadows": [
+      {
+        "name": "icon-body",
+        "value": "drop-shadow(0 10px 14px rgba(0, 0, 0, 0.3))",
+        "purpose": "App icon only, from Apple's macOS icon grid. Web surfaces carry no shadows."
+      }
+    ],
+    "motion": [
+      {
+        "name": "plate-register",
+        "value": "transform 180ms cubic-bezier(0.2, 0.9, 0.3, 1)",
+        "purpose": "Download button pink plate sliding toward register on hover and press."
+      },
+      {
+        "name": "ink-shift",
+        "value": "160ms ease-out",
+        "purpose": "Leader line, pin and callout title shifting from blue to pink."
+      },
+      {
+        "name": "plus-turn",
+        "value": "transform 200ms ease-out",
+        "purpose": "FAQ plus mark flattening to a minus when a row opens."
+      },
+      {
+        "name": "caret-blink",
+        "value": "1.1s steps(1) infinite",
+        "purpose": "Pink caret in the flood plate. Removed under prefers-reduced-motion with every other transition."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "900px"
+      },
+      {
+        "name": "phone",
+        "value": "520px"
+      }
+    ],
+    "ink": {
+      "misregistration": "Pink plate translate(-3px, 2px) under the blue plate at 34px to 62px type; cover wordmark at 118px uses translate(-5px, 4px).",
+      "inkFilter": "#ink in site/app/layout.tsx: fractal-noise displacement (baseFrequency 0.035, scale 2) roughens edges, then a 1.1 frequency grain mask knocks paper specks out of solids. For type and small solids.",
+      "floodFilter": "#flood in site/app/layout.tsx: slow anisotropic mottle (0.006 0.018) holds density at 92% or more, plus sparse specks. For large ink fills.",
+      "paper": "site/public/paper.jpg, a 1300px seamless uncoated plate tiled at 1x over the paper color.",
+      "art": "site/public/mic-ink.jpg, the two-ink Riso mic with paper divided out, composited with multiply. The icon and cover use the same art family (assets/src/icon-art.jpg, cover-art.jpg)."
+    },
+    "surfaces": [
+      "site/app (closetalk.dev landing and /privacy)",
+      "assets/src/icon.html -> assets/icon.png",
+      "assets/src/cover.html -> assets/cover.jpg"
+    ]
+  },
+  "components": [
+    {
+      "name": "Download button",
+      "kind": "button",
+      "refersTo": "button-download",
+      "description": "The primary action, printed as pink and blue plates off register with the label knocked out to paper. Hover pulls the plates toward register; press lands them.",
+      "html": "<a class=\"ds-download\" href=\"#\">Download for Mac</a>",
+      "css": ".ds-download { position: relative; display: inline-block; isolation: isolate; padding: 18px 34px; border-radius: 4px; color: var(--paper-light, #f8f3eb); font: 800 21px/1.2 \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; letter-spacing: -0.01em; text-decoration: none; } .ds-download::before, .ds-download::after { content: \"\"; position: absolute; inset: 0; z-index: -1; border-radius: inherit; mix-blend-mode: multiply; } .ds-download::before { background: var(--pink, #ed269d); transform: translate(-3px, 2px); transition: transform 180ms cubic-bezier(0.2, 0.9, 0.3, 1); } .ds-download::after { background: var(--blue, #1c81c3); } .ds-download:hover::before { transform: translate(-1px, 1px); } .ds-download:active::before { transform: none; } .ds-download:focus-visible { outline: 3px solid var(--blue, #1c81c3); outline-offset: 3px; }"
+    },
+    {
+      "name": "Nav download tab",
+      "kind": "button",
+      "refersTo": "button-nav-download",
+      "description": "Compact solid purple Download in the masthead nav.",
+      "html": "<a class=\"ds-nav-download\" href=\"#\">Download</a>",
+      "css": ".ds-nav-download { display: inline-block; padding: 7px 14px; border-radius: 6px; background: var(--purple, #4a147d); color: var(--paper-light, #f8f3eb); font: 600 16px/1.55 \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; text-decoration: none; } .ds-nav-download:hover { background: #3b0f66; } .ds-nav-download:focus-visible { outline: 3px solid var(--blue, #1c81c3); outline-offset: 3px; }"
+    },
+    {
+      "name": "Masthead",
+      "kind": "nav",
+      "refersTo": "wordmark",
+      "description": "Two-plate wordmark and 600-weight links printed straight onto the paper.",
+      "html": "<header class=\"ds-masthead\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-plate ds-plate-pink\" aria-hidden=\"true\">Closetalk</span><span class=\"ds-plate ds-plate-blue\">Closetalk</span></a><nav><a href=\"#\">Questions</a><a href=\"#\">Privacy</a><a href=\"#\">GitHub</a></nav></header>",
+      "css": ".ds-masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 20px; background: var(--paper, #f2eadf); color: var(--purple, #4a147d); font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; } .ds-wordmark { position: relative; display: inline-block; text-decoration: none; font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; } .ds-plate { mix-blend-mode: multiply; white-space: nowrap; } .ds-plate-pink { position: absolute; left: 0; top: 0; color: var(--pink, #ed269d); transform: translate(-3px, 2px); } .ds-plate-blue { position: relative; color: var(--blue, #1c81c3); } .ds-wordmark:hover .ds-plate-pink { transform: translate(-5px, 3px); } .ds-masthead nav { display: flex; gap: 22px; font-weight: 600; font-size: 16px; } .ds-masthead nav a { color: inherit; text-decoration: underline 2px transparent; text-underline-offset: 4px; } .ds-masthead nav a:hover { text-decoration-color: var(--pink, #ed269d); } .ds-masthead a:focus-visible { outline: 3px solid var(--blue, #1c81c3); outline-offset: 3px; border-radius: 4px; }"
+    },
+    {
+      "name": "Printed heading",
+      "kind": "custom",
+      "refersTo": "headline",
+      "description": "Section heading set twice in one box, pink plate offset under blue, multiplied.",
+      "html": "<h2 class=\"ds-print\"><span class=\"ds-ink-pink\" aria-hidden=\"true\">Hold, talk, let go.</span><span class=\"ds-ink-blue\">Hold, talk, let go.</span></h2>",
+      "css": ".ds-print { position: relative; margin: 0; font: 800 clamp(32px, 4.2vw, 54px)/1.04 \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; letter-spacing: -0.035em; } .ds-print span { display: block; mix-blend-mode: multiply; } .ds-ink-pink { position: absolute; inset: 0; color: var(--pink, #ed269d); transform: translate(-3px, 2px); } .ds-ink-blue { position: relative; color: var(--blue, #1c81c3); }"
+    },
+    {
+      "name": "Diagram callout",
+      "kind": "custom",
+      "refersTo": "title",
+      "description": "A leader line from a round pin to a callout title; hover turns line, pin and title pink.",
+      "html": "<div class=\"ds-callout\"><svg viewBox=\"0 0 160 60\" width=\"160\" height=\"60\" aria-hidden=\"true\"><polyline points=\"150,50 60,14 0,14\"/><circle class=\"ds-pin\" cx=\"150\" cy=\"50\" r=\"9\"/><circle class=\"ds-pin-dot\" cx=\"150\" cy=\"50\" r=\"3.5\"/></svg><div><h3>Runs on your Mac</h3><p>Whisper runs on the Neural Engine. Nothing you say goes to a server.</p></div></div>",
+      "css": ".ds-callout { display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 0; max-width: 460px; font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; color: var(--purple, #4a147d); } .ds-callout polyline { fill: none; stroke: var(--blue, #1c81c3); stroke-width: 1.75; stroke-linejoin: round; transition: stroke 160ms ease-out, stroke-width 160ms ease-out; } .ds-pin { fill: var(--paper-light, #f8f3eb); stroke: var(--blue, #1c81c3); stroke-width: 2.5; transition: stroke 160ms ease-out; } .ds-pin-dot { fill: var(--blue, #1c81c3); transition: fill 160ms ease-out; } .ds-callout h3 { margin: 0; font-size: 23px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; text-align: right; transition: color 160ms ease-out; } .ds-callout p { margin: 6px 0 0; font-size: 16.5px; font-weight: 500; line-height: 1.45; color: var(--purple-2, #5f3f80); text-align: right; } .ds-callout:hover h3 { color: var(--pink, #ed269d); } .ds-callout:hover polyline { stroke: var(--pink, #ed269d); stroke-width: 3; } .ds-callout:hover .ds-pin { stroke: var(--pink, #ed269d); } .ds-callout:hover .ds-pin-dot { fill: var(--pink, #ed269d); }"
+    },
+    {
+      "name": "Fact sheet",
+      "kind": "card",
+      "refersTo": "fact-sheet",
+      "description": "Definition list on a fine, light blue halftone tint, set slightly crooked.",
+      "html": "<dl class=\"ds-facts\"><div><dt>Model</dt><dd>Whisper large-v3 turbo</dd></div><div><dt>Account</dt><dd>None</dd></div><div><dt>Price</dt><dd>Free, MIT licensed</dd></div></dl>",
+      "css": ".ds-facts { position: relative; isolation: isolate; margin: 0; padding: 14px 26px; transform: rotate(-0.6deg); font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; color: var(--purple, #4a147d); } .ds-facts::before { content: \"\"; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle, var(--blue, #1c81c3) 0.75px, transparent 1px) 0 0 / 4px 4px; opacity: 0.4; mix-blend-mode: multiply; } .ds-facts div { display: grid; grid-template-columns: 8.5em 1fr; gap: 16px; padding-block: 14px; border-top: 1.5px solid rgba(74, 20, 125, 0.35); } .ds-facts div:first-child { border-top: 0; } .ds-facts dt { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 4px; } .ds-facts dd { margin: 0; font-size: 19px; font-weight: 600; }"
+    },
+    {
+      "name": "Flood plate",
+      "kind": "card",
+      "refersTo": "flood-plate",
+      "description": "Solid blue ink flood, slightly rotated, with text knocked out to paper and a pink caret.",
+      "html": "<div class=\"ds-flood\"><p>Rename the Export button to Download<span class=\"ds-caret\"></span></p></div>",
+      "css": ".ds-flood { position: relative; isolation: isolate; display: grid; place-items: center; min-height: 200px; padding: 48px 40px; transform: rotate(0.5deg); font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; } .ds-flood::before { content: \"\"; position: absolute; inset: 0; z-index: -1; background: var(--blue, #1c81c3); mix-blend-mode: multiply; } .ds-flood p { margin: 0; max-width: 34ch; color: var(--paper-light, #f8f3eb); font-size: 26px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; } .ds-caret { display: inline-block; width: 3px; height: 1.05em; margin-left: 3px; vertical-align: -0.15em; background: var(--pink, #ed269d); animation: ds-blink 1.1s steps(1) infinite; } @keyframes ds-blink { 50% { opacity: 0; } } @media (prefers-reduced-motion: reduce) { .ds-caret { animation: none; } }"
+    },
+    {
+      "name": "Question row",
+      "kind": "custom",
+      "refersTo": "question-row",
+      "description": "Details row between blue rules with a pink plus that flattens when open.",
+      "html": "<div class=\"ds-faq\"><details><summary>Is it really free?</summary><p>Yes. There is no paid tier.</p></details><details><summary>Does it work on Intel Macs?</summary><p>No. It needs Apple Silicon.</p></details></div>",
+      "css": ".ds-faq { border-bottom: 1.5px solid var(--blue, #1c81c3); font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; color: var(--purple, #4a147d); } .ds-faq details { border-top: 1.5px solid var(--blue, #1c81c3); } .ds-faq summary { position: relative; list-style: none; cursor: pointer; padding: 22px 48px 22px 0; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; } .ds-faq summary::-webkit-details-marker { display: none; } .ds-faq summary::before, .ds-faq summary::after { content: \"\"; position: absolute; right: 8px; top: 50%; width: 18px; height: 3px; border-radius: 2px; background: var(--pink, #ed269d); transition: transform 200ms ease-out; } .ds-faq summary::after { transform: rotate(90deg); } .ds-faq details[open] summary::after { transform: rotate(0deg); } .ds-faq summary:hover { color: #3b0f66; } .ds-faq summary:focus-visible { outline: 3px solid var(--blue, #1c81c3); outline-offset: 3px; border-radius: 4px; } .ds-faq p { margin: 0; max-width: 68ch; padding-bottom: 24px; font-size: 18px; font-weight: 500; line-height: 1.55; color: var(--purple-2, #5f3f80); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The two-ink Riso job",
+    "overview": "Every Closetalk surface is a sheet that came off a Risograph. There is one paper, uncoated and warm with visible fiber, and two inks: fluorescent pink and blue. Wherever the two overprint they make a deep purple, and that purple carries the reading text. Nothing on the page claims to be a screen. Type has a slightly rough edge, solids carry specks of paper showing through, flat plates sit a fraction of a degree crooked, and the two plates of a wordmark or heading land a few pixels out of register.\n\nThe landing page, the app icon and the README cover all print this same job. The hero is a labeled product diagram: the Riso mic in the middle, thin blue leader lines running from round pins on the mic to short callouts at its sides. That diagram language (leader, pin, callout) belongs to the world and may return on future surfaces. The page is light and generous: a single centered column, large heavy Grotesque headlines, plain paragraphs, and long breaks between sections.\n\nThe page stays print in every system theme. It declares `color-scheme: light` and never inverts.",
+    "keyCharacteristics": [
+      "One paper ground, two inks, purple only where they overprint.",
+      "Ink is simulated with the `#ink` filter (rough edge, paper specks) on type and small solids, and the `#flood` filter (uneven drum density) on large fills.",
+      "Pink and blue plates combine with `mix-blend-mode: multiply`, never with opacity.",
+      "Misregistration of 3px left and 2px down is the signature gesture.",
+      "Hand-fed sheets: tint and flood plates rotate by about half a degree.",
+      "Bricolage Grotesque for everything, at 500, 600 and 800."
+    ],
+    "rules": [
+      {
+        "name": "The Two Inks Rule",
+        "body": "Only pink and blue are inks. Purple exists because they overprint, so a new hue never enters. A third ink would break the print.",
+        "section": "colors"
+      },
+      {
+        "name": "The Multiply Rule",
+        "body": "Ink on paper always composites with `mix-blend-mode: multiply`. Layered plates darken where they meet, the way real ink does. Opacity fades and normal blending are off-world.",
+        "section": "colors"
+      },
+      {
+        "name": "The Knockout Rule",
+        "body": "Text on a solid ink plate is paper showing through (paper-light), never white and never a third color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Heavy Print Rule",
+        "body": "Headings and anything printed in ink set at 800. Weight 700 is for fact terms, questions and flood text, 600 for navigation and fact values, 500 for reading text. Nothing goes lighter than 500.",
+        "section": "typography"
+      },
+      {
+        "name": "The Self-Hosted Rule",
+        "body": "The face ships from the site's own origin. No runtime request reaches a font CDN.",
+        "section": "typography"
+      },
+      {
+        "name": "The Misregistration Rule",
+        "body": "A two-plate print offsets its pink plate 3px left and 2px down from the blue plate (at 34px to 62px type; scale it with size, as the cover does at 118px with 5px and 4px). This is ink, not a shadow. Hover may pull the plates toward register (the Download button closes to 1px, then 0 on press; the wordmark drifts apart to 5px and 3px).",
+        "section": "elevation"
+      },
+      {
+        "name": "The Crooked Sheet Rule",
+        "body": "Tint and flood plates sit slightly rotated, between -0.6deg and 0.5deg, like a hand-fed sheet. Type plates stay square.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do print headings, the wordmark and primary actions as two plates, pink offset 3px left and 2px down under blue, both multiplied.",
+      "Do set reading text in Overprint Purple (purple) and secondary text in Thin Purple (purple-2) on Uncoated Paper.",
+      "Do run large ink fills through `#flood` and type or small solids through `#ink`, so solids show grain.",
+      "Do knock text out of ink plates to Bright Paper (paper-light).",
+      "Do use blue for structure (lines, rules, pins, focus) and pink for emphasis and live states.",
+      "Do keep the page light in every system theme and serve fonts and images from the site's own origin."
+    ],
+    "donts": [
+      "Don't introduce a third ink, a gradient, or a dark theme.",
+      "Don't add box shadows or glows to web surfaces; depth comes from overprint and misregistration.",
+      "Don't fade ink with opacity or stack plates with normal blending; use multiply.",
+      "Don't set type lighter than 500 or swap in a second typeface.",
+      "Don't rotate type plates; only tint and flood plates sit crooked."
+    ]
+  }
+}
