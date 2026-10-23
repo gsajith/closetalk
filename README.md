@@ -89,6 +89,23 @@ The log shows how long each mic took to go live and how long each transcription 
 
 `Sources/ClosetalkCore` holds the logic with tests: transcript cleanup, the push-to-talk state machine, spacing and mic choice. `Sources/Closetalk` is the app itself: the key listener, mic capture, WhisperKit and the paste. Transcription runs on [WhisperKit](https://github.com/argmaxinc/WhisperKit).
 
+### Notarized builds
+
+Release builds are signed with a Developer ID certificate and notarized by Apple, so they open without the Open Anyway step. You need an Apple Developer Program membership. Save your notarization login once:
+
+```sh
+xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
+```
+
+Then build, notarize and staple:
+
+```sh
+SIGN_IDENTITY="Developer ID Application: <Name> (<Team ID>)" scripts/build-app.sh
+scripts/notarize.sh
+```
+
+Apple usually answers within a few minutes. If it rejects the build, the script prints Apple's log.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
