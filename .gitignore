@@ -2,3 +2,4 @@
 build/
 .superpowers/
 .DS_Store
+.claude/worktrees/
