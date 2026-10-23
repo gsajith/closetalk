@@ -10,7 +10,7 @@ enum AppState {
     case error(String)
 }
 
-/// Owns the status item: its icon reflects AppState, its menu holds status, permissions, and quit.
+/// Owns the status item: its icon reflects AppState, its menu holds status, permissions, updates and quit.
 final class MenuBarController: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let statusLine = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -19,7 +19,8 @@ final class MenuBarController: NSObject {
     private let microphoneItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
     private let loginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
 
-    override init() {
+    /// `updatesItem` is the updater's "Check for Updates…" item, placed above Quit.
+    init(updatesItem: NSMenuItem) {
         super.init()
         let menu = NSMenu()
         menu.autoenablesItems = false
@@ -32,6 +33,8 @@ final class MenuBarController: NSObject {
         microphoneItem.submenu = NSMenu()
         menu.addItem(microphoneItem)
         menu.addItem(loginItem)
+        menu.addItem(.separator())
+        menu.addItem(updatesItem)
         menu.addItem(NSMenuItem(title: "Quit Closetalk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.delegate = self
         item.menu = menu
