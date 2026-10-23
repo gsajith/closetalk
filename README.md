@@ -108,6 +108,21 @@ scripts/notarize.sh build/Closetalk.dmg
 
 That leaves `build/Closetalk.dmg` and `build/Closetalk.zip` ready to upload. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log.
 
+Self-signed builds turn off hardened runtime's library validation, because macOS only loads Sparkle.framework from the same Apple Team ID and a self-signed certificate has none. Developer ID builds keep it on.
+
+### Updates
+
+Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](https://sparkle-project.org), and from Check for Updates in the menu. Sparkle installs an update only when it's signed with the private key in the login keychain, which matches `SUPublicEDKey` in `Resources/Info.plist`.
+
+For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. After packaging, add the release zip to the appcast:
+
+```sh
+mkdir -p updates && cp build/Closetalk.zip "updates/Closetalk <version>.zip"
+.build/artifacts/sparkle/Sparkle/bin/generate_appcast updates
+```
+
+`generate_appcast` signs the zip with the key from the keychain and writes `updates/appcast.xml`. Keep the `updates` folder between releases so the feed keeps its history, then upload `appcast.xml` to closetalk.dev.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
