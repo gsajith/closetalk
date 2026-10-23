@@ -1,6 +1,6 @@
 # LocalWhisper design
 
-> Historical. Written before the rename to Offscript, under the working name LocalWhisper. The code has moved on since (for example, the recorder now uses AVCaptureSession). The README describes the app as it is.
+> Historical. Written under the working name LocalWhisper, before the app was named Closetalk. The code has moved on since (for example, the recorder now uses AVCaptureSession). The README describes the app as it is.
 
 ## Intent
 

@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>dev.gsajith.Offscript</string>
+	<string>dev.gsajith.Closetalk</string>
 	<key>CFBundleName</key>
-	<string>Offscript</string>
+	<string>Closetalk</string>
 	<key>CFBundleDisplayName</key>
-	<string>Offscript</string>
+	<string>Closetalk</string>
 	<key>CFBundleExecutable</key>
-	<string>Offscript</string>
+	<string>Closetalk</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -21,6 +21,6 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Offscript records while you hold right Command and transcribes on this Mac.</string>
+	<string>Closetalk records while you hold right Command and transcribes on this Mac.</string>
 </dict>
 </plist>
