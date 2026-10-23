@@ -21,8 +21,8 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 
 ## Install
 
-1. Download [Closetalk.zip](https://github.com/gsajith/closetalk/releases/latest/download/Closetalk.zip) and unzip it.
-2. Drag Closetalk.app into Applications and open it.
+1. Download [Closetalk.dmg](https://github.com/gsajith/closetalk/releases/latest/download/Closetalk.dmg), open it, and drag Closetalk into the Applications folder next to it.
+2. Open Closetalk from Applications.
 3. macOS will refuse to open it the first time, because I haven't paid Apple to notarize it. Open System Settings > Privacy & Security, scroll down, and click Open Anyway next to the Closetalk message. Then open the app again.
 
 If you'd rather use Terminal, this does the same thing as step 3:
