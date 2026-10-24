@@ -4,7 +4,8 @@ import ServiceManagement
 
 enum AppState {
     case loadingModel(progress: Double?)
-    case idle
+    /// `sampleModel` while the first launch's sample model stands in for the full one.
+    case idle(sampleModel: Bool)
     case recording
     case transcribing
     case error(String)
@@ -54,7 +55,8 @@ final class MenuBarController: NSObject {
         case .loadingModel(let p?): ("arrow.down.circle", "Downloading model… \(Int(p * 100))%", nil)
         // The first load compiles the model for the Neural Engine, which can take minutes.
         case .loadingModel(nil): ("arrow.down.circle", "Loading model… (first launch can take several minutes)", nil)
-        case .idle: ("mic", "Ready. Hold \(DictationShortcutSettings.shortcut?.name ?? "your dictation key") to dictate.", nil)
+        case .idle(let sample):
+            ("mic", "\(sample ? "Using the sample model" : "Ready"). Hold \(DictationShortcutSettings.shortcut?.name ?? "your dictation key") to dictate.", nil)
         case .recording: ("mic.fill", "Recording…", .systemRed)
         case .transcribing: ("waveform", "Transcribing…", nil)
         case .error(let message): ("exclamationmark.triangle", message, nil)
