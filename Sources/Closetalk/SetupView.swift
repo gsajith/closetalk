@@ -94,13 +94,11 @@ struct SetupView: View {
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
                  text: "Closetalk listens only while you hold \(shortcut). Audio stays on this Mac and is never saved.") {
-            if model.showsDone(.microphone) {
-                Done("Microphone is on.")
-            } else if model.microphoneDenied {
-                Button("Open System Settings", action: model.allowMicrophone).buttonStyle(.borderedProminent)
+            let allowed = model.progress.microphoneAllowed
+            PermissionButton(model.microphoneDenied ? "Open System Settings" : "Allow Microphone",
+                             doneTitle: "Microphone is on", done: allowed, action: model.allowMicrophone)
+            if model.microphoneDenied && !allowed {
                 Note("You turned this off earlier. Switch on Closetalk in the Microphone list.")
-            } else {
-                Button("Allow Microphone", action: model.allowMicrophone).buttonStyle(.borderedProminent)
             }
         }
     }
@@ -108,11 +106,8 @@ struct SetupView: View {
     private var accessibility: some View {
         StepPane(title: "Let Closetalk use \(shortcut)",
                  text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold \(shortcut), and to paste what you said. Turn on Closetalk in the list.") {
-            if model.showsDone(.accessibility) {
-                Done("Accessibility is on.")
-            } else {
-                Button("Open System Settings", action: model.openAccessibilitySettings).buttonStyle(.borderedProminent)
-            }
+            PermissionButton("Open System Settings", doneTitle: "Accessibility is on",
+                             done: model.progress.accessibilityAllowed, action: model.openAccessibilitySettings)
         }
     }
 
@@ -215,6 +210,30 @@ private struct Done: View {
     var body: some View {
         Label(text, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
             .transition(.scale(scale: 0.6, anchor: .leading).combined(with: .opacity))
+    }
+}
+
+/// A permission step's button. Once the permission comes through it stays in place, greyed out and
+/// saying so, while the sidebar plays the step's check.
+private struct PermissionButton: View {
+    let title: String
+    let doneTitle: String
+    let done: Bool
+    let action: () -> Void
+
+    init(_ title: String, doneTitle: String, done: Bool, action: @escaping () -> Void) {
+        self.title = title
+        self.doneTitle = doneTitle
+        self.done = done
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            if done { Label(doneTitle, systemImage: "checkmark") } else { Text(title) }
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(done)
     }
 }
 
