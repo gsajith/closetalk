@@ -11,7 +11,7 @@ const APP_JSON_LD = {
   "@type": "SoftwareApplication",
   name: "Closetalk",
   description:
-    "Push-to-talk dictation for your Mac. Hold right Command, say the prompt, let go, and the text appears at your cursor. Runs on your Mac with no account.",
+    "Push-to-talk dictation for your Mac. Hold your shortcut, say the prompt, let go, and the text appears at your cursor. Runs on your Mac with no account.",
   url: "https://closetalk.dev/",
   applicationCategory: "UtilitiesApplication",
   operatingSystem: "macOS 14 or later",
@@ -130,7 +130,7 @@ export default function Home() {
         <PrintedHeading id="how">Hold, talk, let go.</PrintedHeading>
         <ol className="steps">
           <li>
-            <strong>Hold right ⌘.</strong> A soft chime means the mic is live.
+            <strong>Hold your shortcut.</strong> A soft chime means the mic is live.
           </li>
           <li>
             <strong>Say the prompt.</strong> Talk the way you would to someone next to you.

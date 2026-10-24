@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { preload } from "react-dom";
 
 // The hero diagram: the Riso mic with leader lines to four callouts. Coordinates live in one
@@ -48,8 +45,8 @@ const CALLOUTS: Callout[] = [
     side: "left",
     top: 330,
     pin: [579, 405],
-    title: "Hold right ⌘",
-    body: "Talk while you hold it. Let go, and the text lands at your cursor about a second later.",
+    title: "Hold your shortcut",
+    body: "Pick any key or combo in setup. Talk while you hold it, let go, and the text lands at your cursor.",
   },
   {
     id: "free",
@@ -70,25 +67,9 @@ export default function MicDiagram({ children }: { children: React.ReactNode }) 
   // The mic is the largest thing on the page, so fetch it before anything else.
   preload("/mic-ink.webp", { as: "image", fetchPriority: "high" });
 
-  // Holding right ⌘ on the page lights up the "Hold right ⌘" callout, the same gesture the app uses.
-  const [holding, setHolding] = useState(false);
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => e.code === "MetaRight" && setHolding(true);
-    const up = (e: KeyboardEvent) => e.code === "MetaRight" && setHolding(false);
-    const reset = () => setHolding(false);
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    window.addEventListener("blur", reset);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-      window.removeEventListener("blur", reset);
-    };
-  }, []);
-
   return (
     <div className="stage">
-      <div className="diagram" data-holding={holding || undefined}>
+      <div className="diagram">
         <svg className="diagram-art" viewBox={`0 0 ${STAGE.w} ${STAGE.h}`} role="img" aria-label="A vintage studio microphone, printed in pink and blue ink">
           <image href="/mic-ink.webp" x={MIC.x} y={MIC.y} width={MIC.w} height={MIC.h} />
           {CALLOUTS.map((c) => {

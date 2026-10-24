@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/cover.jpg" alt="Closetalk: talk to your agents like they're sitting next to you" width="100%"></p>
 
-[Closetalk](https://closetalk.dev) ([closetalk.dev](https://closetalk.dev)) is push-to-talk dictation for your Mac. Hold the right Command key, say what you want, and let go. About a second later the text appears wherever your cursor is: a terminal, VS Code, Claude Code, Slack, a browser.
+[Closetalk](https://closetalk.dev) ([closetalk.dev](https://closetalk.dev)) is push-to-talk dictation for your Mac. Hold your shortcut, say what you want, and let go. About a second later the text appears wherever your cursor is: a terminal, VS Code, Claude Code, Slack, a browser.
 
 It runs OpenAI's Whisper model on your Mac. Your voice never leaves the machine, there's no account, and it costs nothing. I built it as a free stand-in for Superwhisper and Wispr Flow, mostly for talking to coding agents.
 
@@ -42,8 +42,9 @@ The build script creates a local code signing certificate called "Closetalk Dev"
 ## First launch
 
 1. Allow microphone access when macOS asks.
-2. Turn on Closetalk in System Settings > Privacy & Security > Accessibility. It needs this to see the right Command key and to paste. No restart needed.
-3. Wait for the model. Closetalk downloads 1.5 GB and gets it ready, which took about 11 minutes on an M1 Max. It happens once. Later launches are ready in a few seconds.
+2. Turn on Closetalk in System Settings > Privacy & Security > Accessibility. It needs this to see your shortcut and to paste. No restart needed.
+3. Choose your shortcut: the key or combo you'll hold to talk, like fn, right ⌘ or ⌃⌥Space.
+4. Wait for the model. Closetalk downloads 1.5 GB and gets it ready, which took about 11 minutes on an M1 Max. It happens once. Later launches are ready in a few seconds.
 
 The menu bar icon shows where things stand:
 
@@ -55,17 +56,17 @@ The menu bar icon shows where things stand:
 | Waveform | Transcribing |
 | Warning triangle | Needs attention. Open the menu to see why. |
 
-The menu also has the microphone picker, a launch at login toggle and Check for Updates. Change shortcut… records a different key or combo to hold instead of right ⌘, like fn or ⌃⌥Space.
+The menu also has the microphone picker, a launch at login toggle and Check for Updates. Change shortcut… records a different key or combo to hold.
 
 ## Troubleshooting
 
-**Nothing happens when I hold right Command in Terminal or iTerm.** Turn off Secure Keyboard Entry in that app's menu. While it's on, macOS hides keystrokes from every other app, Closetalk included.
+**Nothing happens when I hold my shortcut in Terminal or iTerm.** Turn off Secure Keyboard Entry in that app's menu. While it's on, macOS hides keystrokes from every other app, Closetalk included.
 
 **Holding fn opens the emoji picker or starts macOS Dictation.** In System Settings > Keyboard, set "Press 🌐 key to" to Do Nothing.
 
 **The first words get cut off.** You're probably on a Bluetooth mic. Wait for the first chime before talking, or switch to the built-in mic in the menu.
 
-**The orange mic dot flashes when I use a right ⌘ shortcut.** Closetalk opens the mic the moment you press right Command, so it doesn't miss your first word. A shortcut or a quick tap cancels the recording, and nothing gets transcribed.
+**The orange mic dot flashes when I use my shortcut's key for something else.** Closetalk opens the mic the moment you press your shortcut, so it doesn't miss your first word. A shortcut or a quick tap cancels the recording, and nothing gets transcribed.
 
 **The menu still asks for Accessibility after I turned it on.** You probably granted it to an older copy of the app. Remove Closetalk from the Accessibility list with the minus button, then add `/Applications/Closetalk.app` again.
 

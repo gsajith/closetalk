@@ -130,7 +130,7 @@ The page stays print in every system theme. It declares `color-scheme: light` an
 Paper plus two fluorescent Riso inks; every other color is the result of those inks overprinting or thinning.
 
 ### Primary
-- **Fluorescent Pink** (pink): the accent ink. It prints as the offset plate of the wordmark, section headings and Download button, the step numerals, the FAQ plus marks, the caret, and every hover or "hot" state (a callout's leader line and title turn pink while hovered, or while the visitor holds right ⌘).
+- **Fluorescent Pink** (pink): the accent ink. It prints as the offset plate of the wordmark, section headings and Download button, the step numerals, the FAQ plus marks, the caret, and every hover or "hot" state (a callout's leader line and title turn pink while hovered).
 
 ### Secondary
 - **Riso Blue** (blue): the structural ink. It draws leader lines, pins, link underlines, focus rings, FAQ rules, the dotted colophon rule, the halftone tint behind the fact sheet, and the flood plate behind the demo. It is the registered plate in every two-plate print.
