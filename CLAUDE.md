@@ -11,3 +11,7 @@ The five default triage labels, each label string equal to its role name. See `d
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## App
+
+Before changing windows, focus, permissions or paste in the app, read `docs/agents/macos-app.md`. It also covers testing first-launch setup by hand.
