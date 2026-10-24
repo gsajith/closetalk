@@ -1,0 +1,26 @@
+name: Tests
+
+# Builds the whole package, app and WhisperKit included, and runs the ClosetalkCore tests.
+on:
+  pull_request:
+    paths: [Sources/**, Tests/**, Package.swift, Package.resolved, .github/workflows/test.yml]
+  push:
+    branches: [main]
+    paths: [Sources/**, Tests/**, Package.swift, Package.resolved, .github/workflows/test.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  swift-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Building WhisperKit from scratch takes minutes, so keep .build between runs.
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+      - run: swift --version
+      - run: swift test
