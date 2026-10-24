@@ -5,13 +5,16 @@ import ClosetalkCore
 let syntheticEventTag: Int64 = 0x4C57
 
 /// Watches global keyboard and mouse input through a CGEvent tap and reports HotkeyEvents on the main thread.
-/// It's an active tap (needs Accessibility, not Input Monitoring) but passes every event through unchanged.
+/// It's an active tap (needs Accessibility, not Input Monitoring). It passes events through, except a key
+/// shortcut's own key presses, and every key press while the recorder window is recording a new shortcut.
 /// The tap runs on its own thread: an active tap holds up every keystroke on the system until it returns,
 /// so it must never wait on the main thread (e.g. while the mic starts).
 final class HotkeyMonitor {
-    private static let rightCommandKeyCode: Int64 = 54
-    /// Device-dependent flag bit for the right Command key (NX_DEVICERCMDKEYMASK).
-    private static let rightCommandFlag: UInt64 = 0x10
+    private enum Mode {
+        case listening(ShortcutMatcher)
+        case recording(ShortcutRecorder, onStep: (ShortcutRecorder.Step) -> Void)
+    }
+
     /// NX_SYSDEFINED: media and brightness keys arrive as this type, not keyDown.
     private static let systemDefined = CGEventType(rawValue: 14)!
     /// NX_SUBTYPE_AUX_CONTROL_BUTTONS: the media/brightness key subtype of systemDefined events.
@@ -20,21 +23,22 @@ final class HotkeyMonitor {
 
     private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
-    private static var rightCommandIsDown: Bool {
-        CGEventSource.flagsState(.combinedSessionState).rawValue & rightCommandFlag != 0
-    }
-
     private let onEvent: (HotkeyEvent) -> Void
     private var tap: CFMachPort?
+    /// Read and changed on the tap thread, swapped from the main thread, so guarded by `lock`.
+    private var mode: Mode
+    private let lock = NSLock()
 
-    init(onEvent: @escaping (HotkeyEvent) -> Void) {
+    init(shortcut: DictationShortcut, onEvent: @escaping (HotkeyEvent) -> Void) {
         self.onEvent = onEvent
+        mode = .listening(ShortcutMatcher(shortcut: shortcut))
     }
 
     /// Returns false when the tap can't be created, which means Accessibility isn't granted yet.
     func start() -> Bool {
         let types: [CGEventType] = [
-            .flagsChanged, .keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel, Self.systemDefined,
+            .flagsChanged, .keyDown, .keyUp, .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel,
+            Self.systemDefined,
         ]
         let mask = types.reduce(CGEventMask(0)) { $0 | (1 << $1.rawValue) }
         guard let tap = CGEvent.tapCreate(
@@ -44,8 +48,7 @@ final class HotkeyMonitor {
             eventsOfInterest: mask,
             callback: { _, type, event, userInfo in
                 let monitor = Unmanaged<HotkeyMonitor>.fromOpaque(userInfo!).takeUnretainedValue()
-                monitor.handle(type: type, event: event)
-                return Unmanaged.passUnretained(event)
+                return monitor.handle(type: type, event: event) ? nil : Unmanaged.passUnretained(event)
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else { return false }
@@ -63,33 +66,92 @@ final class HotkeyMonitor {
         return true
     }
 
+    /// Listens for `shortcut` from the next key press on, ending any recording.
+    func listen(for shortcut: DictationShortcut) {
+        lock.withLock { mode = .listening(ShortcutMatcher(shortcut: shortcut)) }
+    }
+
+    /// Records the next shortcut pressed anywhere. `onStep` runs on the main thread. On done or cancelled
+    /// the monitor stops recording, and the caller decides what to listen for with `listen(for:)`.
+    func record(onStep: @escaping (ShortcutRecorder.Step) -> Void) {
+        lock.withLock { mode = .recording(ShortcutRecorder(), onStep: onStep) }
+    }
+
     private func emit(_ event: HotkeyEvent) {
         DispatchQueue.main.async { self.onEvent(event) }
     }
 
-    private func handle(type: CGEventType, event: CGEvent) {
-        switch type {
-        case .tapDisabledByTimeout, .tapDisabledByUserInput:
+    /// Returns true to hide the event from every other app.
+    private func handle(type: CGEventType, event: CGEvent) -> Bool {
+        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             // macOS turns slow or interrupted taps off; turn it back on.
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
-            // A release that happened while we were off would leave a recording running forever.
-            if !Self.rightCommandIsDown { emit(.rightCommandUp(Self.now)) }
-        case _ where event.getIntegerValueField(.eventSourceUserData) == syntheticEventTag:
-            break
-        case _ where type != .flagsChanged && event.getIntegerValueField(.eventTargetUnixProcessID) == Self.ownPID:
-            // Clicks and keys in our own menu can't move the cursor in the app being dictated into.
-            break
-        case .flagsChanged:
-            guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCommandKeyCode else { return }
-            let isDown = event.flags.rawValue & Self.rightCommandFlag != 0
-            emit(isDown ? .rightCommandDown(Self.now) : .rightCommandUp(Self.now))
-        case .scrollWheel:
-            // Momentum scrolling keeps firing after the fingers lift; only a real scroll counts.
-            if event.getIntegerValueField(.scrollWheelEventMomentumPhase) == 0 { emit(.otherInput) }
-        case Self.systemDefined:
-            if NSEvent(cgEvent: event)?.subtype.rawValue == Self.auxControlButtons { emit(.otherInput) }
-        default:
-            emit(.otherInput)
+            resyncAfterTapWasOff()
+            return false
         }
+        if event.getIntegerValueField(.eventSourceUserData) == syntheticEventTag { return false }
+
+        let code = event.getIntegerValueField(.keyboardEventKeycode)
+        let flags = event.flags.rawValue
+        let input: KeyInput? = switch type {
+        case .flagsChanged: .flagsChanged(flags: flags)
+        case .keyDown: .keyDown(code: code, flags: flags, isRepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0)
+        case .keyUp: .keyUp(code: code, flags: flags)
+        default: nil
+        }
+
+        lock.lock()
+        defer { lock.unlock() }
+        switch mode {
+        case .recording(var recorder, let onStep):
+            guard let input else { return false }
+            let characters = type == .keyDown ? NSEvent(cgEvent: event)?.charactersIgnoringModifiers : nil
+            let step = recorder.handle(input, characters: characters)
+            switch step {
+            case .done, .cancelled: mode = .listening(ShortcutMatcher(shortcut: DictationShortcutSettings.shortcut))
+            case .recording, .refused: mode = .recording(recorder, onStep: onStep)
+            }
+            DispatchQueue.main.async { onStep(step) }
+            // Keys pressed while recording are meant for the recorder, not the app in front.
+            return type == .keyDown || type == .keyUp
+
+        case .listening(var matcher):
+            if type != .flagsChanged && event.getIntegerValueField(.eventTargetUnixProcessID) == Self.ownPID {
+                // Clicks and keys in our own menu can't move the cursor in the app being dictated into.
+                return false
+            }
+            if let input {
+                let output = matcher.handle(input, at: Self.now)
+                mode = .listening(matcher)
+                if let hotkeyEvent = output.event { emit(hotkeyEvent) }
+                return output.swallow
+            }
+            switch type {
+            case .scrollWheel:
+                // Momentum scrolling keeps firing after the fingers lift; only a real scroll counts.
+                if event.getIntegerValueField(.scrollWheelEventMomentumPhase) == 0 { emit(.otherInput) }
+            case Self.systemDefined:
+                if NSEvent(cgEvent: event)?.subtype.rawValue == Self.auxControlButtons { emit(.otherInput) }
+            default:
+                emit(.otherInput)
+            }
+            return false
+        }
+    }
+
+    /// A release that happened while the tap was off would leave a recording running forever, so replay the
+    /// current key state through the matcher.
+    private func resyncAfterTapWasOff() {
+        lock.lock()
+        defer { lock.unlock() }
+        guard case .listening(var matcher) = mode else { return }
+        let flags = CGEventSource.flagsState(.combinedSessionState).rawValue
+        var events = [matcher.handle(.flagsChanged(flags: flags), at: Self.now).event]
+        if case .key(let code, _, _) = matcher.shortcut,
+           !CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(code)) {
+            events.append(matcher.handle(.keyUp(code: code, flags: flags), at: Self.now).event)
+        }
+        mode = .listening(matcher)
+        events.compactMap { $0 }.forEach(emit)
     }
 }
