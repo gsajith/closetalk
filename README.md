@@ -4,6 +4,10 @@
 
 It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your voice never leaves the machine, there's no account, and it costs nothing. I built it as a free stand-in for Superwhisper and Wispr Flow, mostly for talking to coding agents.
 
+If Closetalk saves you some typing, you can say thanks with a coffee:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z72F8S8)
+
 ## What it does
 
 - **Chimes.** One when the mic goes live, another when it stops.

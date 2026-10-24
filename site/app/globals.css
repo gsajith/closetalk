@@ -145,6 +145,18 @@ p { margin: 0; }
 .closer { display: grid; justify-items: center; gap: 20px; text-align: center; padding-bottom: 40px; }
 .closer h2 { margin-bottom: 8px; }
 
+/* The Ko-fi tip sits under Download as a secondary action: a blue ink outline instead of a full
+   plate, with a pink cup. Hover turns the outline pink, like every hot state. */
+.support { display: grid; justify-items: center; gap: 14px; margin-top: 36px; padding-top: 32px; border-top: 2px dotted var(--blue); }
+.support p { max-width: 40ch; font-size: 17px; color: var(--purple-2); }
+.tip { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px 10px 16px; border-radius: 4px; color: var(--purple); font-size: 17px; font-weight: 800; letter-spacing: -0.01em; text-decoration: none; }
+.tip::before { content: ""; position: absolute; inset: 0; z-index: -1; border: 2px solid var(--blue); border-radius: inherit; mix-blend-mode: multiply; filter: url(#ink); transition: border-color 160ms ease-out; }
+.tip:hover::before { border-color: var(--pink); }
+.tip-cup { width: 26px; height: 26px; flex: none; mix-blend-mode: multiply; filter: url(#ink); }
+.tip-cup-body { fill: var(--pink); }
+.tip-cup-handle { fill: none; stroke: var(--pink); stroke-width: 2.2; stroke-linecap: round; }
+.tip-cup-heart { fill: var(--paper-light); }
+
 .colophon { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; max-width: 1240px; margin: 72px auto 0; padding-block: 28px 40px; padding-left: var(--gutter); padding-right: var(--gutter-r); border-top: 2px dotted var(--blue); font-size: 15px; color: var(--purple-2); }
 .colophon p:last-child { display: flex; gap: 20px; }
 

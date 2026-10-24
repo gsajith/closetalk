@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import MicDiagram from "./mic-diagram";
-import { DOWNLOAD_URL, REPO_URL, REQUIREMENTS } from "./site";
+import { DOWNLOAD_URL, KOFI_URL, REPO_URL, REQUIREMENTS } from "./site";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -56,7 +56,7 @@ const QUESTIONS: [string, React.ReactNode][] = [
     "Is it really free?",
     <>
       Yes. There&apos;s no paid tier and no account. The <a href={REPO_URL}>source is on GitHub</a> under the MIT
-      license.
+      license. If you want to say thanks, you can <a href={KOFI_URL}>buy me a coffee on Ko-fi</a>.
     </>,
   ],
 ];
@@ -68,6 +68,21 @@ function PrintedHeading({ id, children }: { id: string; children: string }) {
     <h2 id={id} className="print" data-print={children}>
       <span>{children}</span>
     </h2>
+  );
+}
+
+// A plain link styled in the site's inks. Ko-fi's own widget would load a script and images from
+// ko-fi.com, and the site makes no third-party requests.
+function TipButton() {
+  return (
+    <a className="tip" href={KOFI_URL}>
+      <svg className="tip-cup" viewBox="0 0 24 24" aria-hidden="true">
+        <path className="tip-cup-body" d="M2.5 7h14v6.5a5.5 5.5 0 0 1-5.5 5.5H8a5.5 5.5 0 0 1-5.5-5.5z" />
+        <path className="tip-cup-handle" d="M16.5 9.5h2a3 3 0 0 1 0 6h-2.2" />
+        <path className="tip-cup-heart" d="M9.5 15.6 7 13.2a1.6 1.6 0 1 1 2.5-2 1.6 1.6 0 1 1 2.5 2z" />
+      </svg>
+      Tip on Ko-fi
+    </a>
   );
 }
 
@@ -156,6 +171,10 @@ export default function Home() {
         <PrintedHeading id="closer">Try it on your next prompt.</PrintedHeading>
         <DownloadButton />
         <p className="requirements">{REQUIREMENTS}</p>
+        <div className="support">
+          <p>Closetalk stays free. If it saves you some typing, you can say thanks with a coffee.</p>
+          <TipButton />
+        </div>
       </section>
     </main>
   );
