@@ -1,6 +1,7 @@
 #!/bin/bash
 # Cuts a release from main: builds with the Developer ID, notarizes the app and DMG, creates a draft
-# GitHub release to review before publishing, then adds the update to updates/appcast.xml.
+# GitHub release to review before publishing, then adds the update to the site's appcast. Merging
+# the site/public changes through a PR puts the update live on closetalk.dev.
 #   scripts/release.sh 1.1
 # Bump CFBundleShortVersionString and CFBundleVersion in Resources/Info.plist through a PR first.
 # SIGN_IDENTITY overrides the signing certificate. ALLOW_BRANCH=1 skips the main-branch check, for
@@ -11,7 +12,9 @@ cd "$(dirname "$0")/.."
 VERSION="${1:?Usage: scripts/release.sh <version>}"
 export SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Gautham Sajith (843324F58U)}"
 PLIST=Resources/Info.plist
-APPCAST=updates/appcast.xml
+# The Sparkle feed and its archives live with the site, so closetalk.dev serves them from its root.
+FEED_DIR=site/public
+APPCAST=$FEED_DIR/appcast.xml
 
 fail() { echo "$1" >&2; exit 1; }
 
@@ -53,17 +56,16 @@ scripts/notarize.sh build/Closetalk.dmg
 spctl -a -t open --context context:primary-signature build/Closetalk.dmg
 
 # The draft comes before the feed: if the feed step fails, deleting the draft is enough to retry.
-# The other way round, a failed upload would leave a feed entry that blocks the next run.
+# The other way round, a leftover feed entry would block the next run.
 gh release create "v$VERSION" build/Closetalk.dmg build/Closetalk.zip --draft \
   --target "$(git rev-parse HEAD)" --title "Closetalk $VERSION" --generate-notes
 
-mkdir -p updates
-cp build/Closetalk.zip "updates/Closetalk-$VERSION.zip"
-.build/artifacts/sparkle/Sparkle/bin/generate_appcast updates
+cp build/Closetalk.zip "$FEED_DIR/Closetalk-$VERSION.zip"
+.build/artifacts/sparkle/Sparkle/bin/generate_appcast "$FEED_DIR"
 
 cat <<EOF
 
 Draft release v$VERSION is ready. Review its notes on GitHub, then publish it.
-Then upload these from updates/ to the root of closetalk.dev:
-$(cd updates && ls -1 | grep -v '^old_updates$' | sed 's/^/  /')
+Then merge the update into the site through a PR, which deploys it to closetalk.dev:
+$(git status --short -- "$FEED_DIR" | sed 's/^/  /')
 EOF
