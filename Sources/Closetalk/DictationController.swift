@@ -17,6 +17,7 @@ final class DictationController {
     private static let maxRecordingLength: TimeInterval = 5 * 60
 
     private let menuBar: MenuBarController
+    private let setup: SetupModel
     private let recorder = Recorder()
     private let transcriber = Transcriber()
     private var machine = HotkeyStateMachine()
@@ -35,15 +36,14 @@ final class DictationController {
     /// Transcriptions run one at a time, in order, so back-to-back dictations paste in the order spoken.
     private var lastTranscription: Task<Void, Never>?
 
-    init(menuBar: MenuBarController) {
+    init(menuBar: MenuBarController, setup: SetupModel) {
         self.menuBar = menuBar
+        self.setup = setup
         menuBar.onChangeShortcut = { [weak self] in self?.recordShortcut() }
     }
 
+    /// Permissions are requested from the setup window, not here.
     func start() {
-        AVCaptureDevice.requestAccess(for: .audio) { _ in
-            DispatchQueue.main.async { self.refreshMenu() }
-        }
         loadModel()
         startMonitor()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -66,17 +66,28 @@ final class DictationController {
         Task {
             while !modelReady {
                 modelError = nil
+                // Checked before loading: the load itself records that the first compile happened.
+                let firstTime = !Transcriber.hasCompiledBefore
+                var loadingStarted = false
                 do {
                     try await transcriber.load { p in
                         Task { @MainActor in
+                            // These tasks can run out of order, so a late download report must not
+                            // undo "loading" or "ready".
+                            guard !self.modelReady, !(loadingStarted && p != nil) else { return }
+                            if p == nil { loadingStarted = true }
                             self.loadProgress = p
+                            self.setup.setSpeechModel(p.map { .downloading(fraction: $0) }
+                                ?? .compiling(startedAt: Date(), firstTime: firstTime))
                             self.refreshMenu()
                         }
                     }
                     modelReady = true
+                    setup.setSpeechModel(.ready)
                 } catch {
                     Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
                     modelError = "Model failed to load, retrying in 30 s: \(error.localizedDescription)"
+                    setup.setSpeechModel(.failed(message: error.localizedDescription))
                     refreshMenu()
                     try? await Task.sleep(for: .seconds(30))
                 }
@@ -85,12 +96,13 @@ final class DictationController {
         }
     }
 
-    /// The tap needs Accessibility. Until it's granted, retry every couple of seconds.
+    /// The tap needs Accessibility. Until it's granted, retry every couple of seconds. Trying to create
+    /// the tap without it makes macOS show its own prompt, so wait until it's on: the setup window asks.
     private func startMonitor() {
         let monitor = HotkeyMonitor(shortcut: DictationShortcutSettings.shortcut) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
         }
-        if monitor.start() {
+        if AXIsProcessTrusted(), monitor.start() {
             self.monitor = monitor
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.startMonitor() }

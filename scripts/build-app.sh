@@ -36,6 +36,8 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$BIN/Closetalk" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
+# Art for the first-launch window.
+cp Resources/SetupMic.png "$APP/Contents/Resources/"
 
 # App icon: assets/icon.png (rendered from assets/src/icon.html) at every size macOS asks for.
 ICONSET="$TMP/AppIcon.iconset"
