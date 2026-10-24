@@ -4,6 +4,7 @@ import { REPO_URL } from "../site";
 export const metadata: Metadata = {
   title: "Privacy: Closetalk",
   description: "What Closetalk and closetalk.dev do with your data: nothing leaves your Mac.",
+  alternates: { canonical: "/privacy" },
 };
 
 // Adapted from the README's Privacy section. Update both together.

@@ -24,9 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={bricolage.variable}>
       <body>
         <header className="masthead">
-          <Link href="/" className="wordmark" aria-label="Closetalk home">
-            <span className="plate plate-pink" aria-hidden="true">Closetalk</span>
-            <span className="plate plate-blue">Closetalk</span>
+          <Link href="/" className="wordmark print" data-print="Closetalk">
+            <span>Closetalk</span>
           </Link>
           <nav aria-label="Site">
             <Link href="/#questions">Questions</Link>

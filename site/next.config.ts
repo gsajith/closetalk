@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   output: "export",
   images: { unoptimized: true },
+  // site/ is its own project. Pin the root so a lockfile in the repo above it isn't picked up.
+  turbopack: { root: __dirname },
 };
 
 export default config;

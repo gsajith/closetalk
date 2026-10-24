@@ -1,5 +1,26 @@
+import type { Metadata } from "next";
 import MicDiagram from "./mic-diagram";
 import { DOWNLOAD_URL, REPO_URL, REQUIREMENTS } from "./site";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+// Structured data so search engines know this page is a free Mac app. Facts only: no ratings
+// or reviews, because there aren't any yet.
+const APP_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Closetalk",
+  description:
+    "Push-to-talk dictation for your Mac. Hold right Command, say the prompt, let go, and the text appears at your cursor. Runs on your Mac with no account.",
+  url: "https://closetalk.dev/",
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "macOS 14 or later",
+  softwareRequirements: "Mac with Apple Silicon (M1 or later)",
+  downloadUrl: DOWNLOAD_URL,
+  image: "https://closetalk.dev/icon.png",
+  license: "https://opensource.org/license/mit",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+};
 
 const FACTS: [string, string][] = [
   ["Model", "Whisper large-v3 turbo"],
@@ -9,6 +30,8 @@ const FACTS: [string, string][] = [
   ["Price", "Free, MIT licensed"],
 ];
 
+// Selling points only. Setup and troubleshooting (first-launch wait, permissions, Secure Keyboard
+// Entry) live in the README.
 const QUESTIONS: [string, React.ReactNode][] = [
   [
     "How is this different from Wispr Flow or Superwhisper?",
@@ -19,13 +42,6 @@ const QUESTIONS: [string, React.ReactNode][] = [
     </>,
   ],
   [
-    "Why does the first launch take so long?",
-    <>
-      Closetalk downloads the 1.5 GB model, then macOS compiles it for your Neural Engine. On an M1 Max that took about
-      11 minutes. It happens once. After that, Closetalk is ready a few seconds after launch.
-    </>,
-  ],
-  [
     "Which apps does it work in?",
     <>
       Anywhere you can type: Terminal, VS Code, Claude Code, ChatGPT, Slack, your browser. It pastes at your cursor
@@ -33,41 +49,24 @@ const QUESTIONS: [string, React.ReactNode][] = [
     </>,
   ],
   [
-    "What permissions does it need?",
-    <>
-      The microphone, so it can hear you, and Accessibility, so it can see the right ⌘ key and paste. Audio stays in
-      memory while you dictate and is never written to disk.
-    </>,
-  ],
-  [
     "Will my keyboard shortcuts still work?",
     <>Yes. Right ⌘C, ⌘Tab and the rest work as usual, and a quick tap does nothing.</>,
   ],
   [
-    "Nothing happens when I hold right ⌘ in Terminal or iTerm.",
-    <>
-      Turn off Secure Keyboard Entry in that app&apos;s menu. While it&apos;s on, macOS hides keystrokes from every
-      other app, Closetalk included.
-    </>,
-  ],
-  [
-    "Does it work on Intel Macs?",
-    <>No. It needs a Mac with Apple Silicon (M1 or later) running macOS 14 or later.</>,
-  ],
-  [
     "Is it really free?",
     <>
-      Yes. There&apos;s no paid tier. The <a href={REPO_URL}>source is on GitHub</a> under the MIT license.
+      Yes. There&apos;s no paid tier and no account. The <a href={REPO_URL}>source is on GitHub</a> under the MIT
+      license.
     </>,
   ],
 ];
 
-// A section heading printed in two plates off register (see .print in globals.css).
+// A section heading printed in two plates off register (see .print in globals.css). The pink
+// plate is a pseudo-element drawn from data-print, so the text appears once in the HTML.
 function PrintedHeading({ id, children }: { id: string; children: string }) {
   return (
-    <h2 id={id} className="print">
-      <span className="ink-pink" aria-hidden="true">{children}</span>
-      <span className="ink-blue">{children}</span>
+    <h2 id={id} className="print" data-print={children}>
+      <span>{children}</span>
     </h2>
   );
 }
@@ -83,6 +82,7 @@ function DownloadButton() {
 export default function Home() {
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(APP_JSON_LD) }} />
       <section className="hero" aria-labelledby="headline">
         <h1 id="headline" className="inked">Talk to your agents like they&apos;re sitting next to you.</h1>
         <p className="lede">
