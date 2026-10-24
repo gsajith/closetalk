@@ -94,10 +94,10 @@ struct SetupView: View {
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
                  text: "Closetalk listens only while you hold \(shortcut). Audio stays on this Mac and is never saved.") {
-            let allowed = model.progress.microphoneAllowed
             PermissionButton(model.microphoneDenied ? "Open System Settings" : "Allow Microphone",
-                             doneTitle: "Microphone is on", done: allowed, action: model.allowMicrophone)
-            if model.microphoneDenied && !allowed {
+                             doneTitle: "Microphone is on", state: permissionState(.microphone),
+                             action: model.allowMicrophone)
+            if model.microphoneDenied && !model.progress.microphoneAllowed && !model.waiting.contains(.microphone) {
                 Note("You turned this off earlier. Switch on Closetalk in the Microphone list.")
             }
         }
@@ -107,8 +107,15 @@ struct SetupView: View {
         StepPane(title: "Let Closetalk use \(shortcut)",
                  text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold \(shortcut), and to paste what you said. Turn on Closetalk in the list.") {
             PermissionButton("Open System Settings", doneTitle: "Accessibility is on",
-                             done: model.progress.accessibilityAllowed, action: model.openAccessibilitySettings)
+                             state: permissionState(.accessibility), action: model.openAccessibilitySettings)
         }
+    }
+
+    /// Granted but not checked off yet still reads Waiting…, so the green check lands with the sidebar's.
+    private func permissionState(_ step: SetupStep) -> PermissionButton.State {
+        if model.showsDone(step) { return .done }
+        if model.waiting.contains(step) || model.progress.isDone(step) { return .waiting }
+        return .ready
     }
 
     @ViewBuilder private var speechModel: some View {
@@ -213,27 +220,36 @@ private struct Done: View {
     }
 }
 
-/// A permission step's button. Once the permission comes through it stays in place, greyed out and
-/// saying so, while the sidebar plays the step's check.
+/// A permission step's button: blue to ask, grey "Waiting…" while the person is in the system prompt
+/// or System Settings, then green with a check once the permission is on.
 private struct PermissionButton: View {
+    enum State { case ready, waiting, done }
+
     let title: String
     let doneTitle: String
-    let done: Bool
+    let state: State
     let action: () -> Void
 
-    init(_ title: String, doneTitle: String, done: Bool, action: @escaping () -> Void) {
+    init(_ title: String, doneTitle: String, state: State, action: @escaping () -> Void) {
         self.title = title
         self.doneTitle = doneTitle
-        self.done = done
+        self.state = state
         self.action = action
     }
 
     var body: some View {
         Button(action: action) {
-            if done { Label(doneTitle, systemImage: "checkmark") } else { Text(title) }
+            switch state {
+            case .ready: Text(title)
+            case .waiting: Text("Waiting…")
+            case .done: Label(doneTitle, systemImage: "checkmark").symbolEffect(.bounce, value: state)
+            }
         }
         .buttonStyle(.borderedProminent)
-        .disabled(done)
+        .tint(state == .done ? .green : nil)
+        .disabled(state == .waiting)
+        // Done stays green rather than greyed out, but there's nothing left to click.
+        .allowsHitTesting(state == .ready)
     }
 }
 

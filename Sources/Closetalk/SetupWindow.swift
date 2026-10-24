@@ -22,6 +22,9 @@ final class SetupModel {
     /// Steps that just got done but haven't played their check yet. They show as not done until the
     /// window is back in front, so the person sees the check happen.
     private(set) var unchecked: Set<SetupStep> = []
+    /// Permission steps whose button was clicked, while the person is in a system prompt or System
+    /// Settings. Their button shows "Waiting…" until the permission comes through or they give up.
+    private(set) var waiting: Set<SetupStep> = []
     /// Granting a permission hands focus to a system prompt or to System Settings, so the window uses
     /// this to come back to the front before playing the check.
     var bringToFront: (() -> Void)?
@@ -67,23 +70,36 @@ final class SetupModel {
     func windowClosed() {
         isWindowOpen = false
         unchecked = []
+        waiting = []
     }
 
     /// Shows the macOS prompt the first time. After a denial macOS won't prompt again, so this opens
     /// the Microphone list in System Settings instead.
     func allowMicrophone() {
+        waiting.insert(.microphone)
         if AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
             AVCaptureDevice.requestAccess(for: .audio) { _ in
-                DispatchQueue.main.async { self.refreshPermissions() }
+                DispatchQueue.main.async {
+                    self.refreshPermissions()
+                    // Don't Allow ends the wait right away.
+                    if !self.progress.microphoneAllowed { self.waiting.remove(.microphone) }
+                }
             }
         } else {
             Self.openSettings("Privacy_Microphone")
         }
     }
 
+    /// Coming back to Closetalk without granting the permission ends the wait, so the button works again.
+    func appBecameActive() {
+        refreshPermissions()
+        waiting = waiting.filter(progress.isDone)
+    }
+
     /// The first click shows the macOS prompt, which adds Closetalk to the Accessibility list and has
     /// its own button to System Settings. Later clicks go straight to System Settings.
     func openAccessibilitySettings() {
+        waiting.insert(.accessibility)
         if askedForAccessibility {
             Self.openSettings("Privacy_Accessibility")
         } else {
@@ -142,7 +158,10 @@ final class SetupModel {
                 bringToFront?()
             }
             try? await Task.sleep(for: .milliseconds(300))
-            withAnimation(.spring(duration: 0.45, bounce: 0.4)) { _ = unchecked.remove(step) }
+            withAnimation(.spring(duration: 0.45, bounce: 0.4)) {
+                unchecked.remove(step)
+                waiting.remove(step)
+            }
             try? await Task.sleep(for: .seconds(1))
             guard isWindowOpen, selected == step, let next = progress.nextUnfinished(after: step) else { return }
             go(to: next)
@@ -169,6 +188,14 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
         model.bringToFront = { [weak self] in
             guard let self, self.window?.isVisible == true else { return }
             self.bringToFront()
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.window?.isVisible == true else { return }
+                self.model.appBecameActive()
+            }
         }
     }
 
