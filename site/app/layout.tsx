@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://closetalk.dev"),
   title: "Closetalk: push-to-talk dictation that runs on your Mac",
   description:
-    "Hold your shortcut, say the prompt, let go. Closetalk types it wherever your cursor is. Free, no account, and nothing you say leaves your Mac.",
+    "Hold a key, say the prompt, let go. Closetalk types it wherever your cursor is. Free, no account, and nothing you say leaves your Mac.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

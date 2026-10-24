@@ -45,8 +45,8 @@ const CALLOUTS: Callout[] = [
     side: "left",
     top: 330,
     pin: [579, 405],
-    title: "Hold your shortcut",
-    body: "Pick any key or combo in setup. Talk while you hold it, let go, and the text lands at your cursor.",
+    title: "Hold a key to talk",
+    body: "You pick the key during setup, like fn or right ⌘. Let go, and the text lands at your cursor.",
   },
   {
     id: "free",

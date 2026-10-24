@@ -250,7 +250,7 @@ final class DictationController {
 
     private var state: AppState {
         if monitor == nil { return .error("Needs Accessibility permission") }
-        if DictationShortcutSettings.shortcut == nil { return .error("Choose a shortcut in Setup… to start dictating") }
+        if DictationShortcutSettings.shortcut == nil { return .error("Open Setup… to pick a key to hold for dictation") }
         // Checked fresh each time, so turning the mic on in System Settings clears it without a relaunch.
         if MicrophonePermission.isDenied {
             return .error("Needs Microphone permission")

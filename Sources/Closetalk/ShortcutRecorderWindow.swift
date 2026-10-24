@@ -9,7 +9,7 @@ final class ShortcutRecorderWindow: NSObject, NSWindowDelegate {
     private let panel = NSPanel(
         contentRect: NSRect(x: 0, y: 0, width: 380, height: 170),
         styleMask: [.titled, .closable], backing: .buffered, defer: false)
-    private let instruction = NSTextField(labelWithString: "Press the shortcut you want to hold to dictate.")
+    private let instruction = NSTextField(labelWithString: "Press the key or keys you want to hold while you talk.")
     private let shortcutLabel = NSTextField(labelWithString: "")
     private let hintLabel = NSTextField(wrappingLabelWithString: hint)
     private let onClose: () -> Void
@@ -18,7 +18,7 @@ final class ShortcutRecorderWindow: NSObject, NSWindowDelegate {
     init(current: String, onClose: @escaping () -> Void) {
         self.onClose = onClose
         super.init()
-        panel.title = "Dictation shortcut"
+        panel.title = "Dictation key"
         panel.isReleasedWhenClosed = false
         panel.level = .floating
         panel.delegate = self

@@ -8,7 +8,7 @@ struct SetupView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The saved dictation shortcut as the menu names it, like "fn" or "⌃⌥Space".
-    private var shortcut: String { DictationShortcutSettings.shortcut?.name ?? "your shortcut" }
+    private var shortcut: String { DictationShortcutSettings.shortcut?.name ?? "your dictation key" }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -94,7 +94,7 @@ struct SetupView: View {
 
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
-                 text: "Closetalk listens only while you hold your shortcut. Audio stays on this Mac and is never saved.") {
+                 text: "Closetalk only listens while you're dictating. Audio stays on this Mac and is never saved.") {
             PermissionButton(model.microphoneDenied ? "Open System Settings" : "Allow Microphone",
                              doneTitle: "Microphone is on", state: permissionState(.microphone),
                              action: model.allowMicrophone)
@@ -105,8 +105,8 @@ struct SetupView: View {
     }
 
     private var accessibility: some View {
-        StepPane(title: "Let Closetalk see your shortcut",
-                 text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold your shortcut, and to paste what you said. Turn on Closetalk in the list.") {
+        StepPane(title: "Let Closetalk listen to your keypresses",
+                 text: "Closetalk needs to notice the key you hold to turn the microphone on and off. macOS calls this Accessibility. Turn on Closetalk in the list.") {
             PermissionButton("Open System Settings", doneTitle: "Accessibility is on",
                              state: permissionState(.accessibility), action: model.openAccessibilitySettings)
         }
@@ -120,11 +120,11 @@ struct SetupView: View {
     }
 
     private var shortcutStep: some View {
-        StepPane(title: "Choose your shortcut",
-                 text: "Hold it to talk, let go to paste. Pick a key you don't type with, like fn or right ⌘, or a combo like ⌃⌥Space.") {
+        StepPane(title: "Pick a key to hold while you talk",
+                 text: "Hold it down, say what you want, and let go. Your words appear wherever you're typing. Choose a key you don't type with, like fn or right ⌘, or a combo like ⌃⌥Space.") {
             if model.recordingShortcut {
                 // The event tap does the listening, so this only shows what it hears.
-                Text(model.heldKeys.isEmpty ? "Press your shortcut…" : model.heldKeys)
+                Text(model.heldKeys.isEmpty ? "Press it now…" : model.heldKeys)
                     .font(.title3.weight(.semibold))
                     .frame(minWidth: 220, minHeight: 36)
                     .background(.background, in: .rect(cornerRadius: 6))
@@ -133,14 +133,14 @@ struct SetupView: View {
                     Text("That key needs ⌃, ⌥ or ⌘ with it, or it would stop typing.")
                         .font(.callout).foregroundStyle(.red)
                 } else {
-                    Note("Modifier keys work on their own. Other keys need ⌃, ⌥ or ⌘. Esc cancels.")
+                    Note("Keys like fn or right ⌘ work on their own. Other keys need ⌃, ⌥ or ⌘ with them. Esc cancels.")
                 }
                 Button("Cancel", action: model.cancelRecordingShortcut)
             } else if model.showsDone(.shortcut) {
-                Done("Hold \(shortcut) to dictate.")
-                Button("Change Shortcut", action: model.recordShortcut)
+                Done("Hold \(shortcut) to talk.")
+                Button("Pick a Different Key", action: model.recordShortcut)
             } else {
-                Button("Record Shortcut", action: model.recordShortcut).buttonStyle(.borderedProminent)
+                Button("Pick a Key", action: model.recordShortcut).buttonStyle(.borderedProminent)
             }
         }
     }
@@ -156,7 +156,7 @@ struct SetupView: View {
             }
         case .compiling(let startedAt, true):
             StepPane(title: "Getting the speech model ready",
-                     text: "Downloaded. Now your Mac is compiling it for the Neural Engine. This happens once, and takes about 10 minutes.") {
+                     text: "Downloaded. Now your Mac is getting it ready. This happens once, and takes about 10 minutes.") {
                 // Core ML reports no progress here, so the bar follows elapsed time.
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let elapsed = context.date.timeIntervalSince(startedAt)
@@ -306,7 +306,7 @@ extension SetupStep {
         switch self {
         case .microphone: "Microphone"
         case .accessibility: "Accessibility"
-        case .shortcut: "Shortcut"
+        case .shortcut: "Dictation key"
         case .model: "Speech model"
         case .tryIt: "Try it"
         }

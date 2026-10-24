@@ -20,7 +20,7 @@ Hardware floor: Apple Silicon (M1 or later), macOS 14 or later, about 3 GB free 
 
 ## Product Purpose
 
-Closetalk is push-to-talk dictation. Hold your shortcut, talk, let go, and the text appears wherever the cursor is, about a second later. It exists as a free stand-in for paid dictation apps, built mostly for talking to coding agents. Success is a user who stops reaching for the keyboard to write prompts.
+Closetalk is push-to-talk dictation. Hold a key, talk, let go, and the text appears wherever the cursor is, about a second later. It exists as a free stand-in for paid dictation apps, built mostly for talking to coding agents. Success is a user who stops reaching for the keyboard to write prompts.
 
 ## Positioning
 
