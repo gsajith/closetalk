@@ -10,29 +10,31 @@ enum AppState {
     case error(String)
 }
 
-/// Owns the status item: its icon reflects AppState, its menu holds status, permissions, settings,
-/// updates and quit.
+/// Owns the status item: its icon reflects AppState, its menu holds status, setup, settings, updates
+/// and quit.
 final class MenuBarController: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let statusLine = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    private let accessibilityItem = NSMenuItem(
-        title: "Grant Accessibility permission…", action: #selector(openAccessibilitySettings), keyEquivalent: "")
+    private let setupItem = NSMenuItem(title: "Setup…", action: #selector(showSetup), keyEquivalent: "")
+    private let openSetup: () -> Void
     private let microphoneItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
     private let shortcutItem = NSMenuItem(title: "Change shortcut…", action: #selector(changeShortcut), keyEquivalent: "")
     /// Called when someone picks Change shortcut…; DictationController opens the recorder.
     var onChangeShortcut: (() -> Void)?
     private let loginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
 
-    /// `updatesItem` is the updater's "Check for Updates…" item, placed above Quit.
-    init(updatesItem: NSMenuItem) {
+    /// `updatesItem` is the updater's "Check for Updates…" item, placed above Quit. `openSetup` shows
+    /// the first-launch window, which also handles permissions.
+    init(updatesItem: NSMenuItem, openSetup: @escaping () -> Void) {
+        self.openSetup = openSetup
         super.init()
         let menu = NSMenu()
         menu.autoenablesItems = false
         statusLine.isEnabled = false
-        accessibilityItem.target = self
+        setupItem.target = self
         loginItem.target = self
         menu.addItem(statusLine)
-        menu.addItem(accessibilityItem)
+        menu.addItem(setupItem)
         menu.addItem(.separator())
         microphoneItem.submenu = NSMenu()
         menu.addItem(microphoneItem)
@@ -67,8 +69,8 @@ final class MenuBarController: NSObject {
         statusLine.title = text
     }
 
-    @objc private func openAccessibilitySettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    @objc private func showSetup() {
+        openSetup()
     }
 
     /// Rebuilt each time the menu opens so plugged-in or removed mics show up.
@@ -115,7 +117,6 @@ final class MenuBarController: NSObject {
 extension MenuBarController: NSMenuDelegate {
     // Refresh items that depend on system state each time the menu opens.
     func menuWillOpen(_ menu: NSMenu) {
-        accessibilityItem.isHidden = AXIsProcessTrusted()
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         rebuildMicrophoneMenu()
     }

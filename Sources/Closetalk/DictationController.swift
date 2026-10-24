@@ -17,6 +17,7 @@ final class DictationController {
     private static let maxRecordingLength: TimeInterval = 5 * 60
 
     private let menuBar: MenuBarController
+    private let setup: SetupModel
     private let recorder = Recorder()
     private let transcriber = Transcriber()
     private var machine = HotkeyStateMachine()
@@ -35,15 +36,14 @@ final class DictationController {
     /// Transcriptions run one at a time, in order, so back-to-back dictations paste in the order spoken.
     private var lastTranscription: Task<Void, Never>?
 
-    init(menuBar: MenuBarController) {
+    init(menuBar: MenuBarController, setup: SetupModel) {
         self.menuBar = menuBar
+        self.setup = setup
         menuBar.onChangeShortcut = { [weak self] in self?.recordShortcut() }
     }
 
+    /// Permissions are requested from the setup window, not here.
     func start() {
-        AVCaptureDevice.requestAccess(for: .audio) { _ in
-            DispatchQueue.main.async { self.refreshMenu() }
-        }
         loadModel()
         startMonitor()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -66,17 +66,25 @@ final class DictationController {
         Task {
             while !modelReady {
                 modelError = nil
+                // Checked before loading: the load itself records that the first compile happened.
+                let firstTime = !Transcriber.hasCompiledBefore
                 do {
                     try await transcriber.load { p in
                         Task { @MainActor in
+                            // A late progress report must not undo "ready".
+                            guard !self.modelReady else { return }
                             self.loadProgress = p
+                            self.setup.setModel(p.map { .downloading(fraction: $0) }
+                                ?? .compiling(startedAt: Date(), firstTime: firstTime))
                             self.refreshMenu()
                         }
                     }
                     modelReady = true
+                    setup.setModel(.ready)
                 } catch {
                     Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
                     modelError = "Model failed to load, retrying in 30 s: \(error.localizedDescription)"
+                    setup.setModel(.failed(message: error.localizedDescription))
                     refreshMenu()
                     try? await Task.sleep(for: .seconds(30))
                 }

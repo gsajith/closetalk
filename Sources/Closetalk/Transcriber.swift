@@ -12,13 +12,24 @@ actor Transcriber {
             .appending(path: "Closetalk/models")
     }
 
+    /// Written after the first successful load. Core ML compiles the model for the Neural Engine on
+    /// that load, which takes about 10 minutes; later loads take seconds.
+    private static var compiledMarker: URL {
+        baseFolder.appending(path: "\(modelVariant).compiled")
+    }
+
+    /// Whether a load has finished before, so the next one won't need the long first compile.
+    static var hasCompiledBefore: Bool {
+        FileManager.default.fileExists(atPath: compiledMarker.path)
+    }
+
     /// Where WhisperKit's downloader puts this variant under baseFolder.
     private static var modelFolder: URL {
         baseFolder.appending(path: "models/argmaxinc/whisperkit-coreml/\(modelVariant)")
     }
 
     /// Downloads the model if it isn't on disk yet, then loads and warms it up.
-    /// Reports download progress as 0...1, then nil once the download is done and loading starts.
+    /// Reports download progress as 0...1 (only when a download is needed), then nil when loading starts.
     func load(progress: @escaping @Sendable (Double?) -> Void) async throws {
         // Written only after a download finishes, so an interrupted download resumes on the next try.
         let doneMarker = Self.baseFolder.appending(path: "\(Self.modelVariant).complete")
@@ -27,8 +38,8 @@ actor Transcriber {
                 progress(p.fractionCompleted)
             }
             FileManager.default.createFile(atPath: doneMarker.path, contents: nil)
-            progress(nil)
         }
+        progress(nil)
         let config = WhisperKitConfig(
             modelFolder: Self.modelFolder.path,
             tokenizerFolder: Self.baseFolder,
@@ -40,6 +51,7 @@ actor Transcriber {
         )
         do {
             whisper = try await WhisperKit(config)
+            FileManager.default.createFile(atPath: Self.compiledMarker.path, contents: nil)
         } catch {
             // Likely a damaged download. Forget it was complete so the next retry downloads again.
             try? FileManager.default.removeItem(at: doneMarker)

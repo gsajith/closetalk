@@ -5,23 +5,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBar: MenuBarController!
     private var dictation: DictationController!
     private var updater: Updater!
+    private var setup: SetupWindowController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         updater = Updater()
-        menuBar = MenuBarController(updatesItem: updater.menuItem)
-        promptForAccessibility()
-        dictation = DictationController(menuBar: menuBar)
+        setup = SetupWindowController()
+        menuBar = MenuBarController(updatesItem: updater.menuItem, openSetup: { [weak self] in self?.setup.show() })
+        dictation = DictationController(menuBar: menuBar, setup: setup.model)
         dictation.start()
+        // The window asks for both permissions and explains the one-time model compile, so it opens
+        // on a first launch and whenever a permission has gone missing.
+        if setup.model.needsSetup { setup.show() }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         Inserter.flushPendingRestore()
-    }
-
-    private func promptForAccessibility() {
-        // Shows the system prompt pointing at System Settings if Accessibility isn't granted yet.
-        // The microphone prompt comes from DictationController.start().
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(options)
     }
 }
