@@ -37,9 +37,8 @@ final class SetupModel {
         didSet { update { $0.triedIt = !practiceText.isEmpty } }
     }
 
-    var microphoneDenied: Bool {
-        AVAudioApplication.shared.recordPermission == .denied
-    }
+    /// Stored rather than computed, so the view redraws when it changes.
+    private(set) var microphoneDenied = MicrophonePermission.isDenied
 
     /// True on a first launch, or whenever a permission has gone missing since. Call
     /// refreshPermissions() first.
@@ -53,11 +52,11 @@ final class SetupModel {
 
     func refreshPermissions() {
         update {
-            // AVCaptureDevice.authorizationStatus keeps its first answer for the life of the process, so
-            // turning the mic on in System Settings after Don't Allow would never show. This one is live.
-            $0.microphoneAllowed = AVAudioApplication.shared.recordPermission == .granted
+            $0.microphoneAllowed = MicrophonePermission.isAllowed
             $0.accessibilityAllowed = AXIsProcessTrusted()
         }
+        let denied = MicrophonePermission.isDenied
+        if denied != microphoneDenied { microphoneDenied = denied }
     }
 
     /// The window shows a step as done once its check has played.
@@ -79,7 +78,7 @@ final class SetupModel {
     /// the Microphone list in System Settings instead.
     func allowMicrophone() {
         waiting.insert(.microphone)
-        if AVAudioApplication.shared.recordPermission == .undetermined {
+        if MicrophonePermission.canPrompt {
             AVCaptureDevice.requestAccess(for: .audio) { _ in
                 DispatchQueue.main.async {
                     self.refreshPermissions()
