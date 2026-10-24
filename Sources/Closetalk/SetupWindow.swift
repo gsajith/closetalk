@@ -15,7 +15,7 @@ final class SetupModel {
         shortcutChosen: DictationShortcutSettings.shortcut != nil,
         model: Transcriber.isDownloaded
             ? .compiling(startedAt: Date(), firstTime: !Transcriber.hasCompiledBefore)
-            : .downloading(fraction: 0),
+            : .downloading(fraction: 0, startedAt: Date()),
         triedIt: false)
     var selected: SetupStep = .microphone
     /// Which way the last step change went, so the panes slide the right way.
@@ -42,10 +42,8 @@ final class SetupModel {
     private(set) var heldKeys = ""
     /// The last key pressed while recording would have stopped typing, so it wasn't saved.
     private(set) var shortcutRefused = false
-    /// The practice field on the Try it step. Any dictation landing there finishes setup.
-    var practiceText = "" {
-        didSet { update { $0.triedIt = !practiceText.isEmpty } }
-    }
+    /// The practice field on the Try it step. Only a dictation landing there finishes setup, see dictationInserted().
+    var practiceText = ""
 
     /// Stored rather than computed, so the view redraws when it changes.
     private(set) var microphoneDenied = MicrophonePermission.isDenied
@@ -59,6 +57,17 @@ final class SetupModel {
 
     func setSpeechModel(_ model: ModelSetup) {
         update { $0.model = model }
+    }
+
+    /// A dictation was just pasted. With the window in front on Try it, it landed in the practice field,
+    /// which finishes setup. Typing or pasting there doesn't count: the step is about trying the key.
+    func dictationInserted() {
+        guard isWindowOpen, selected == .tryIt, NSApp.isActive else { return }
+        update { $0.triedIt = true }
+    }
+
+    func setSampleModel(_ sample: SampleModel) {
+        update { $0.sampleModel = sample }
     }
 
     func refreshStatus() {
@@ -171,8 +180,7 @@ final class SetupModel {
         }
     }
 
-    /// Applies a change, and plays the check for any step it finishes. Try it has no check: the person
-    /// stays there to read what they dictated.
+    /// Applies a change, and plays the check for any step it finishes.
     private func update(_ change: (inout SetupProgress) -> Void) {
         let before = progress
         var next = progress
@@ -180,8 +188,19 @@ final class SetupModel {
         guard next != progress else { return }
         progress = next
         guard isWindowOpen else { return }
-        for step in [SetupStep.microphone, .accessibility, .shortcut, .model] where !before.isDone(step) && progress.isDone(step) {
+        for step in SetupStep.allCases where !before.isDone(step) && progress.isDone(step) {
             checkOff(step)
+        }
+        if before.sampleModel != .ready && progress.sampleModel == .ready { goTryTheSampleModel() }
+    }
+
+    /// The sample model unlocks Try it, so the model step moves on to it after a moment. The model step
+    /// keeps its spinner until the full model is ready.
+    private func goTryTheSampleModel() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            guard isWindowOpen, selected == .model, progress.isAvailable(.tryIt), !progress.isDone(.tryIt) else { return }
+            go(to: .tryIt)
         }
     }
 
@@ -201,7 +220,8 @@ final class SetupModel {
                 waiting.remove(step)
             }
             try? await Task.sleep(for: .seconds(1))
-            guard isWindowOpen, selected == step, let next = progress.nextUnfinished(after: step) else { return }
+            // Try it stays put, so the person can read what they dictated.
+            guard isWindowOpen, selected == step, step != .tryIt, let next = progress.nextUnfinished(after: step) else { return }
             go(to: next)
         }
     }

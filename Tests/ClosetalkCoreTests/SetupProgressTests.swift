@@ -3,8 +3,10 @@ import XCTest
 
 final class SetupProgressTests: XCTestCase {
     private func progress(mic: Bool = false, ax: Bool = false, key: Bool = false,
-                          model: ModelSetup = .downloading(fraction: 0), tried: Bool = false) -> SetupProgress {
-        SetupProgress(microphoneAllowed: mic, accessibilityAllowed: ax, shortcutChosen: key, model: model, triedIt: tried)
+                          model: ModelSetup = .downloading(fraction: 0, startedAt: .distantPast), sample: SampleModel = .none,
+                          tried: Bool = false) -> SetupProgress {
+        SetupProgress(microphoneAllowed: mic, accessibilityAllowed: ax, shortcutChosen: key, model: model,
+                      sampleModel: sample, triedIt: tried)
     }
 
     func testStepsAreDoneWhenTheirConditionHolds() {
@@ -21,6 +23,30 @@ final class SetupProgressTests: XCTestCase {
         XCTAssertFalse(progress(mic: true, ax: true, key: false, model: .ready).isAvailable(.tryIt))
         XCTAssertTrue(progress(mic: true, ax: true, key: true, model: .ready).isAvailable(.tryIt))
         XCTAssertTrue(progress().isAvailable(.model))
+    }
+
+    func testTheSampleModelUnlocksTryItButDoesNotFinishTheModelStep() {
+        XCTAssertFalse(progress(mic: true, ax: true, key: true, sample: .loading).isAvailable(.tryIt))
+        let p = progress(mic: true, ax: true, key: true, sample: .ready)
+        XCTAssertTrue(p.isAvailable(.tryIt))
+        XCTAssertFalse(p.isDone(.model))
+        XCTAssertEqual(p.firstUnfinished, .model)
+    }
+
+    func testEstimateCombinesDownloadSpeedWithATypicalCompile() {
+        let start = Date(timeIntervalSince1970: 0)
+        // A quarter downloaded in 30 s: 90 s of download left, then the compile.
+        let quarter = ModelSetup.downloading(fraction: 0.25, startedAt: start)
+        XCTAssertEqual(ModelEstimate.remaining(quarter, at: start + 30)!, 90 + CompileEstimate.typical, accuracy: 0.01)
+        // Too early to tell, and nothing to estimate outside the download.
+        XCTAssertNil(ModelEstimate.remaining(.downloading(fraction: 0.01, startedAt: start), at: start + 30))
+        XCTAssertNil(ModelEstimate.remaining(quarter, at: start + 1))
+        XCTAssertNil(ModelEstimate.remaining(.ready, at: start))
+    }
+
+    func testEstimateText() {
+        XCTAssertEqual(ModelEstimate.text(60), "About a minute left")
+        XCTAssertEqual(ModelEstimate.text(690), "About 12 minutes left")
     }
 
     func testShortcutWaitsForAccessibility() {

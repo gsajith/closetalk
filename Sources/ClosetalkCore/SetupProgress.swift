@@ -7,7 +7,8 @@ public enum SetupStep: Int, CaseIterable, Sendable {
 
 /// Where the speech model is in its one-time setup.
 public enum ModelSetup: Equatable, Sendable {
-    case downloading(fraction: Double)
+    /// `startedAt` lets the window estimate the time left from the download's speed.
+    case downloading(fraction: Double, startedAt: Date)
     /// Loading after the download. `firstTime` means Core ML is compiling for the Neural Engine,
     /// which takes about 10 minutes once; later launches load in seconds.
     case compiling(startedAt: Date, firstTime: Bool)
@@ -16,21 +17,34 @@ public enum ModelSetup: Equatable, Sendable {
     case failed(message: String)
 }
 
+/// The small model a first launch loads so people can try dictation before the full one is ready.
+public enum SampleModel: Equatable, Sendable {
+    /// Not needed (the full model was ready before), or it failed to load.
+    case none
+    case loading
+    case ready
+}
+
 /// What the first-launch window shows as done, and where Continue goes next.
 public struct SetupProgress: Equatable, Sendable {
     public var microphoneAllowed: Bool
     public var accessibilityAllowed: Bool
     /// A dictation shortcut is saved.
     public var shortcutChosen: Bool
+    /// The full speech model's state. A first launch also loads a small sample model, so people can try
+    /// dictation while the full one downloads and compiles.
     public var model: ModelSetup
+    public var sampleModel: SampleModel
     /// The practice field received a dictation.
     public var triedIt: Bool
 
-    public init(microphoneAllowed: Bool, accessibilityAllowed: Bool, shortcutChosen: Bool, model: ModelSetup, triedIt: Bool) {
+    public init(microphoneAllowed: Bool, accessibilityAllowed: Bool, shortcutChosen: Bool, model: ModelSetup,
+                sampleModel: SampleModel = .none, triedIt: Bool) {
         self.microphoneAllowed = microphoneAllowed
         self.accessibilityAllowed = accessibilityAllowed
         self.shortcutChosen = shortcutChosen
         self.model = model
+        self.sampleModel = sampleModel
         self.triedIt = triedIt
     }
 
@@ -44,12 +58,12 @@ public struct SetupProgress: Equatable, Sendable {
         }
     }
 
-    /// Recording a shortcut listens through the event tap, which needs Accessibility. Try it needs
-    /// everything else. The other steps can be done in any order.
+    /// Recording a shortcut listens through the event tap, which needs Accessibility. Try it needs the
+    /// other steps, except that the sample model is enough. The rest can be done in any order.
     public func isAvailable(_ step: SetupStep) -> Bool {
         switch step {
         case .shortcut: accessibilityAllowed
-        case .tryIt: microphoneAllowed && accessibilityAllowed && shortcutChosen && model == .ready
+        case .tryIt: microphoneAllowed && accessibilityAllowed && shortcutChosen && (model == .ready || sampleModel == .ready)
         default: true
         }
     }
@@ -68,6 +82,22 @@ public struct SetupProgress: Equatable, Sendable {
     /// Still to do, and not locked.
     private func isOpen(_ step: SetupStep) -> Bool {
         !isDone(step) && isAvailable(step)
+    }
+}
+
+/// How long until the full speech model is ready, shown while it downloads.
+public enum ModelEstimate {
+    /// The download's time left at its current speed, plus a typical first compile. Nil while there's
+    /// too little to go on, and outside the download.
+    public static func remaining(_ model: ModelSetup, at now: Date) -> TimeInterval? {
+        guard case .downloading(let fraction, let startedAt) = model else { return nil }
+        let elapsed = now.timeIntervalSince(startedAt)
+        guard fraction >= 0.02, elapsed >= 3 else { return nil }
+        return elapsed * (1 - fraction) / fraction + CompileEstimate.typical
+    }
+
+    public static func text(_ remaining: TimeInterval) -> String {
+        remaining <= 90 ? "About a minute left" : "About \(Int((remaining / 60).rounded(.up))) minutes left"
     }
 }
 

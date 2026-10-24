@@ -8,7 +8,9 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--transcribe" 
         do {
             let transcriber = Transcriber()
             let loadStart = Date()
-            try await transcriber.load { p in if let p { print(String(format: "download %.0f%%", p * 100)) } }
+            try await transcriber.load(sampleFirst: false) { event in
+                if case .downloading(let p) = event { print(String(format: "download %.0f%%", p * 100)) }
+            }
             print("model ready in \(Int(Date().timeIntervalSince(loadStart) * 1000)) ms")
             let samples = try Transcriber.samples(fromFile: path)
             for run in 1...2 {

@@ -147,17 +147,37 @@ struct SetupView: View {
     }
 
     @ViewBuilder private var speechModel: some View {
+        if model.progress.sampleModel == .loading {
+            // Before the full download starts, so its 0% doesn't look stuck.
+            StepPane(title: "Getting a sample model ready",
+                     text: "So you can try Closetalk in about 30 seconds, while the full model downloads.") {
+                ProgressView().controlSize(.small)
+            }
+        } else {
+            fullModelPane
+        }
+    }
+
+    @ViewBuilder private var fullModelPane: some View {
         switch model.progress.model {
-        case .downloading(let fraction):
+        case .downloading(let fraction, _):
             StepPane(title: "Downloading the speech model",
                      text: "A one-time download, about 1.5 GB.") {
+                sampleModelNote
                 ProgressView(value: fraction)
-                Note("\(Int(fraction * 100))% done")
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    HStack {
+                        Note("\(Int(fraction * 100))% done")
+                        Spacer()
+                        Note(ModelEstimate.remaining(model.progress.model, at: context.date).map(ModelEstimate.text) ?? "")
+                    }
+                }
                 Note("You can close this window. It keeps going.")
             }
         case .compiling(let startedAt, true):
             StepPane(title: "Getting the speech model ready",
                      text: "This happens once and takes about 10 minutes.") {
+                sampleModelNote
                 // Core ML reports no progress here, so the bar follows elapsed time.
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let elapsed = context.date.timeIntervalSince(startedAt)
@@ -187,6 +207,14 @@ struct SetupView: View {
         }
     }
 
+    /// Shown while the full model gets ready, once the sample model can stand in.
+    @ViewBuilder private var sampleModelNote: some View {
+        if model.progress.sampleModel == .ready {
+            Label("A small sample model is ready, so you can try Closetalk now.", systemImage: "checkmark.circle")
+                .font(.callout)
+        }
+    }
+
     private var tryIt: some View {
         VStack(alignment: .leading, spacing: 12) {
             (Text("Hold ") + Text(shortcut).bold() + Text(" and talk"))
@@ -194,6 +222,13 @@ struct SetupView: View {
             Text("Say anything, then let go. It works the same in any app.")
                 .foregroundStyle(.secondary)
             PracticeField(text: $model.practiceText)
+            if model.progress.model == .ready {
+                Note("Using the full speech model.")
+            } else {
+                Label("Using the sample model, which is less accurate. Wait for the full model before real use.",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.callout).foregroundStyle(.orange)
+            }
         }
     }
 

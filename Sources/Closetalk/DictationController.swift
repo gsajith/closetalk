@@ -23,7 +23,10 @@ final class DictationController {
     private var machine = HotkeyStateMachine()
     private var spacing = SpacingPolicy()
     private var monitor: HotkeyMonitor?
+    /// A model is loaded, sample or full, so dictation works.
     private var modelReady = false
+    private var fullModelReady = false
+    private var usingSampleModel = false
     private var isRecording = false
     /// Bumped per recording so a late "mic is live" callback from a cancelled recording is ignored.
     private var recordingID = 0
@@ -61,27 +64,47 @@ final class DictationController {
     }
 
     /// Loads the model, retrying every 30 s. Failures are often a dropped connection during the first download.
+    /// A first launch starts with the sample model, so dictation works while the full one gets ready.
     private func loadModel() {
+        // Asked once, before anything loads: the sample model's compile fills the same cache that
+        // hasCompiledBefore looks at for versions without the marker.
+        let firstTime = !Transcriber.hasCompiledBefore
         Task {
-            while !modelReady {
+            while !fullModelReady {
                 modelError = nil
-                // Checked before loading: the load itself records that the first compile happened.
-                let firstTime = !Transcriber.hasCompiledBefore
+                var downloadStart: Date?
                 var loadingStarted = false
                 do {
-                    try await transcriber.load { p in
+                    try await transcriber.load(sampleFirst: firstTime) { event in
                         Task { @MainActor in
-                            // These tasks can run out of order, so a late download report must not
-                            // undo "loading" or "ready".
-                            guard !self.modelReady, !(loadingStarted && p != nil) else { return }
-                            if p == nil { loadingStarted = true }
-                            self.loadProgress = p
-                            self.setup.setSpeechModel(p.map { .downloading(fraction: $0) }
-                                ?? .compiling(startedAt: Date(), firstTime: firstTime))
+                            // These tasks can run out of order, so a late report must not undo a later state.
+                            guard !self.fullModelReady else { return }
+                            switch event {
+                            case .sampleLoading:
+                                self.setup.setSampleModel(.loading)
+                            case .sampleFailed:
+                                self.setup.setSampleModel(.none)
+                            case .sampleReady:
+                                self.modelReady = true
+                                self.usingSampleModel = true
+                                self.setup.setSampleModel(.ready)
+                            case .downloading(let fraction):
+                                guard !loadingStarted else { return }
+                                let start = downloadStart ?? Date()
+                                downloadStart = start
+                                self.loadProgress = fraction
+                                self.setup.setSpeechModel(.downloading(fraction: fraction, startedAt: start))
+                            case .loading:
+                                loadingStarted = true
+                                self.loadProgress = nil
+                                self.setup.setSpeechModel(.compiling(startedAt: Date(), firstTime: firstTime))
+                            }
                             self.refreshMenu()
                         }
                     }
+                    fullModelReady = true
                     modelReady = true
+                    usingSampleModel = false
                     setup.setSpeechModel(.ready)
                 } catch {
                     Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
@@ -203,6 +226,7 @@ final class DictationController {
                 let prefix = spacing.prefix(at: now)
                 Self.log.notice("insert \(text.count) chars, leading space: \(!prefix.isEmpty)")
                 Inserter.insert(prefix + text)
+                setup.dictationInserted()
                 spacing.recordInsert(at: now)
             }
             refreshMenu()
@@ -225,9 +249,10 @@ final class DictationController {
         if MicrophonePermission.isDenied {
             return .error("Needs Microphone permission")
         }
+        // A failure while the sample model works still lets people dictate, but the menu says so.
         if let modelError { return .error(modelError) }
         if !modelReady { return .loadingModel(progress: loadProgress) }
         if isRecording { return .recording }
-        return pendingTranscriptions > 0 ? .transcribing : .idle
+        return pendingTranscriptions > 0 ? .transcribing : .idle(sampleModel: usingSampleModel)
     }
 }
