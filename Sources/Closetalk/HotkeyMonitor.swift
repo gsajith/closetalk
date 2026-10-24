@@ -13,7 +13,7 @@ final class HotkeyMonitor {
     private enum Mode {
         /// Nil until a shortcut is chosen: keys still count as other input, but nothing dictates.
         case listening(ShortcutMatcher?)
-        case recording(ShortcutRecorder, onStep: (ShortcutRecorder.Step) -> Void)
+        case recording(ShortcutRecorder, layout: KeyboardLayout?, onStep: (ShortcutRecorder.Step) -> Void)
     }
 
     /// NX_SYSDEFINED: media and brightness keys arrive as this type, not keyDown.
@@ -74,8 +74,9 @@ final class HotkeyMonitor {
 
     /// Records the next shortcut pressed anywhere. `onStep` runs on the main thread. On done or cancelled
     /// the monitor stops recording, and the caller decides what to listen for with `listen(for:)`.
-    func record(onStep: @escaping (ShortcutRecorder.Step) -> Void) {
-        lock.withLock { mode = .recording(ShortcutRecorder(), onStep: onStep) }
+    @MainActor func record(onStep: @escaping (ShortcutRecorder.Step) -> Void) {
+        let layout = KeyboardLayout.current()
+        lock.withLock { mode = .recording(ShortcutRecorder(), layout: layout, onStep: onStep) }
     }
 
     private func emit(_ event: HotkeyEvent) {
@@ -104,13 +105,15 @@ final class HotkeyMonitor {
         lock.lock()
         defer { lock.unlock() }
         switch mode {
-        case .recording(var recorder, let onStep):
+        case .recording(var recorder, let layout, let onStep):
             guard let input else { return false }
-            let characters = type == .keyDown ? NSEvent(cgEvent: event)?.charactersIgnoringModifiers : nil
+            // Not NSEvent.charactersIgnoringModifiers: it asks the input source manager, which crashes off
+            // the main thread. See KeyboardLayout.
+            let characters = type == .keyDown ? layout?.characters(for: code) : nil
             let step = recorder.handle(input, characters: characters)
             switch step {
             case .done, .cancelled: mode = .listening(DictationShortcutSettings.shortcut.map(ShortcutMatcher.init))
-            case .recording, .refused: mode = .recording(recorder, onStep: onStep)
+            case .recording, .refused: mode = .recording(recorder, layout: layout, onStep: onStep)
             }
             DispatchQueue.main.async { onStep(step) }
             // Keys pressed while recording are meant for the recorder, not the app in front.
