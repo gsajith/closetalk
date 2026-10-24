@@ -30,7 +30,6 @@ a:hover { text-decoration-color: var(--pink); }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
 .inked { filter: url(#ink); }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Masthead: the wordmark prints in two plates like the headings (see .print below). */
 .masthead {
@@ -56,9 +55,11 @@ p { margin: 0; }
 .stage { container-type: inline-size; width: min(100%, calc((100svh - 430px) * 1200 / 500)); min-width: min(100%, 860px); margin: 14px auto 0; }
 .diagram { position: relative; aspect-ratio: 1200 / 500; text-align: left; }
 .diagram-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.leader polyline { fill: none; stroke: var(--blue); stroke-width: 1.75; stroke-linejoin: round; transition: stroke 160ms ease-out, stroke-width 160ms ease-out; }
-.pin { fill: var(--paper-light); stroke: var(--blue); stroke-width: 2.5; transition: fill 160ms ease-out, stroke 160ms ease-out; }
-.pin-dot { fill: var(--blue); transition: fill 160ms ease-out; }
+/* --hot is 1 while a leader is lit (see below), which mixes its ink from blue to pink. */
+.leader { --hot: 0; --ink: color-mix(in srgb, var(--pink) calc(var(--hot) * 100%), var(--blue)); }
+.leader polyline { fill: none; stroke: var(--ink); stroke-width: calc(1.75px + var(--hot) * 1.25px); stroke-linejoin: round; transition: stroke 160ms ease-out, stroke-width 160ms ease-out; }
+.pin { fill: var(--paper-light); stroke: var(--ink); stroke-width: 2.5; transition: fill 160ms ease-out, stroke 160ms ease-out; }
+.pin-dot { fill: var(--ink); transition: fill 160ms ease-out; }
 .pin-letter { display: none; font: 800 38px var(--font); fill: var(--pink); stroke: var(--paper-light); stroke-width: 8px; paint-order: stroke; text-anchor: middle; }
 
 .callouts { list-style: none; margin: 0; padding: 0; }
@@ -74,10 +75,6 @@ p { margin: 0; }
 .diagram:has(.callout[data-id="key"]:hover) .leader[data-for="key"],
 .diagram:has(.callout[data-id="free"]:hover) .leader[data-for="free"],
 .diagram[data-holding] .leader[data-for="key"] { --hot: 1; }
-.leader { --hot: 0; }
-.diagram .leader:is([data-for]) polyline { stroke: color-mix(in srgb, var(--pink) calc(var(--hot) * 100%), var(--blue)); stroke-width: calc(1.75px + var(--hot) * 1.25px); }
-.diagram .leader:is([data-for]) .pin { stroke: color-mix(in srgb, var(--pink) calc(var(--hot) * 100%), var(--blue)); }
-.diagram .leader:is([data-for]) .pin-dot { fill: color-mix(in srgb, var(--pink) calc(var(--hot) * 100%), var(--blue)); }
 .callout:hover h2, .diagram[data-holding] .callout[data-id="key"] h2 { color: var(--pink); }
 
 /* The mic's stand ends at the stage's bottom edge, centered 1.02% right of the stage's middle.
@@ -119,7 +116,7 @@ p { margin: 0; }
 .facts::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle, var(--blue) 0.75px, transparent 1px) 0 0 / 4px 4px; opacity: 0.4; mix-blend-mode: multiply; filter: url(#ink); }
 .facts div { display: grid; grid-template-columns: 8.5em 1fr; gap: 16px; padding-block: 14px; border-top: 1.5px solid rgba(74, 20, 125, 0.35); }
 .facts div:first-child { border-top: 0; }
-.facts dt { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--purple); padding-top: 4px; }
+.facts dt { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 4px; }
 .facts dd { margin: 0; font-size: 19px; font-weight: 600; }
 
 .steps { list-style: none; counter-reset: step; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }

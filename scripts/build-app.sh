@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds build/Closetalk.app and signs it with hardened runtime.
 # SIGN_IDENTITY picks the certificate. Release builds pass the Developer ID one:
-#   SIGN_IDENTITY="Developer ID Application: Gautham Sajith (843324F58U)" scripts/build-app.sh
+#   SIGN_IDENTITY="Developer ID Application: <Name> (<Team ID>)" scripts/build-app.sh
 # Without it, the build uses the self-signed "Closetalk Dev" identity, which anyone can create.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -10,6 +10,8 @@ IDENTITY="${SIGN_IDENTITY:-Closetalk Dev}"
 SPARKLE_IDENTITY="$IDENTITY"
 TIMESTAMP=""
 ENTITLEMENTS=Resources/Closetalk.entitlements
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
 if [ "$IDENTITY" = "Closetalk Dev" ]; then
   # Creates the signing identity on first run; does nothing after that.
   scripts/make-cert.sh
@@ -18,8 +20,7 @@ if [ "$IDENTITY" = "Closetalk Dev" ]; then
   # Sparkle ad-hoc. Hardened runtime only loads frameworks from the app's Team ID, so dev builds
   # turn that check off. Release builds keep both.
   SPARKLE_IDENTITY="-"
-  ENTITLEMENTS=$(mktemp)
-  trap 'rm -f "$ENTITLEMENTS"' EXIT
+  ENTITLEMENTS="$TMP/Closetalk.entitlements"
   cp Resources/Closetalk.entitlements "$ENTITLEMENTS"
   /usr/libexec/PlistBuddy -c "Add :com.apple.security.cs.disable-library-validation bool true" "$ENTITLEMENTS"
 elif [[ "$IDENTITY" == "Developer ID Application"* ]]; then
@@ -37,7 +38,7 @@ cp "$BIN/Closetalk" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
 
 # App icon: assets/icon.png (rendered from assets/src/icon.html) at every size macOS asks for.
-ICONSET="$(mktemp -d)/AppIcon.iconset"
+ICONSET="$TMP/AppIcon.iconset"
 mkdir -p "$ICONSET"
 for s in 16 32 128 256 512; do
   sips -z "$s" "$s" assets/icon.png --out "$ICONSET/icon_${s}x${s}.png" >/dev/null

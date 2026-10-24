@@ -17,7 +17,8 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--transcribe" 
                 print("run \(run): \(Int(Date().timeIntervalSince(start) * 1000)) ms: \(text)")
             }
         } catch {
-            print("error: \(error)")
+            FileHandle.standardError.write(Data("error: \(error)\n".utf8))
+            exit(1)
         }
         done.signal()
     }

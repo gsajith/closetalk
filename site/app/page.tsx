@@ -25,7 +25,7 @@ const APP_JSON_LD = {
 const FACTS: [string, string][] = [
   ["Model", "Whisper large-v3 turbo"],
   ["Where it runs", "Your Mac's Neural Engine"],
-  ["Network use", "One 1.5 GB model download on first launch"],
+  ["Network use", "A 1.5 GB model download on first launch, then a daily update check"],
   ["Account", "None"],
   ["Price", "Free, MIT licensed"],
 ];

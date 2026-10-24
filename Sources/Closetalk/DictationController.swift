@@ -7,9 +7,9 @@ import os
 /// Everything here runs on the main thread; only transcription runs elsewhere.
 @MainActor
 final class DictationController {
-    /// Clips shorter than this are almost always accidental.
-    private static let minimumSamples = 16_000 / 4
-    private static let log = Logger(subsystem: "dev.gsajith.Closetalk", category: "dictation")
+    /// Clips shorter than a quarter second are almost always accidental.
+    private static let minimumSamples = Recorder.sampleRate / 4
+    private nonisolated static let log = Logger(subsystem: "dev.gsajith.Closetalk", category: "dictation")
     /// "Talk now" once the mic is live, and a different sound when recording ends.
     private static let startSound = NSSound(named: "Tink")
     private static let stopSound = NSSound(named: "Pop")
@@ -47,7 +47,7 @@ final class DictationController {
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] note in
             let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
-            Self.log.notice("spacing reset: activated \(app?.bundleIdentifier ?? "?", privacy: .public)")
+            Self.log.debug("spacing reset: activated \(app?.bundleIdentifier ?? "?", privacy: .public)")
             MainActor.assumeIsolated { self?.spacing.reset() }
         }
         // A locked or sleeping Mac can swallow the key release, so stop listening then.
@@ -58,25 +58,27 @@ final class DictationController {
         }
     }
 
+    /// Loads the model, retrying every 30 s. Failures are often a dropped connection during the first download.
     private func loadModel() {
         Task {
-            do {
+            while !modelReady {
                 modelError = nil
-                try await transcriber.load { p in
-                    Task { @MainActor in
-                        self.loadProgress = p
-                        self.refreshMenu()
+                do {
+                    try await transcriber.load { p in
+                        Task { @MainActor in
+                            self.loadProgress = p
+                            self.refreshMenu()
+                        }
                     }
+                    modelReady = true
+                } catch {
+                    Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
+                    modelError = "Model failed to load, retrying in 30 s: \(error.localizedDescription)"
+                    refreshMenu()
+                    try? await Task.sleep(for: .seconds(30))
                 }
-                modelReady = true
-                refreshMenu()
-            } catch {
-                // Often a dropped connection during the first download. Try again shortly.
-                Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
-                modelError = "Model failed to load, retrying in 30 s: \(error.localizedDescription)"
-                refreshMenu()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in self?.loadModel() }
             }
+            refreshMenu()
         }
     }
 
@@ -87,16 +89,16 @@ final class DictationController {
         }
         if monitor.start() {
             self.monitor = monitor
-            refreshMenu()
         } else {
-            refreshMenu()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.startMonitor() }
         }
+        refreshMenu()
     }
 
     private func handle(_ event: HotkeyEvent) {
         if case .otherInput = event {
-            Self.log.notice("spacing reset: key or click")
+            // Every key press, click and scroll lands here, so this only logs at debug level.
+            Self.log.debug("spacing reset: key or click")
             spacing.reset()
         }
         guard modelReady, let action = machine.handle(event) else { return }
@@ -153,7 +155,8 @@ final class DictationController {
                 Self.log.error("transcription failed: \(error.localizedDescription, privacy: .public)")
             }
             let elapsed = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
-            Self.log.notice("transcribed \(samples.count / 16) ms of audio in \(elapsed) ms")
+            let audioLength = samples.count * 1000 / Recorder.sampleRate
+            Self.log.notice("transcribed \(audioLength) ms of audio in \(elapsed) ms")
             pendingTranscriptions -= 1
             if let text = TranscriptCleaner.clean(raw) {
                 let now = ProcessInfo.processInfo.systemUptime
@@ -172,15 +175,18 @@ final class DictationController {
     }
 
     private func refreshMenu() {
-        if monitor == nil { return menuBar.update(.error("Needs Accessibility permission")) }
+        menuBar.update(state)
+    }
+
+    private var state: AppState {
+        if monitor == nil { return .error("Needs Accessibility permission") }
         // Checked fresh each time, so turning the mic on in System Settings clears it without a relaunch.
         if [.denied, .restricted].contains(AVCaptureDevice.authorizationStatus(for: .audio)) {
-            return menuBar.update(.error("Needs Microphone permission"))
+            return .error("Needs Microphone permission")
         }
-        if let modelError { return menuBar.update(.error(modelError)) }
-        if !modelReady { return menuBar.update(.loadingModel(progress: loadProgress)) }
-        if isRecording { menuBar.update(.recording) }
-        else if pendingTranscriptions > 0 { menuBar.update(.transcribing) }
-        else { menuBar.update(.idle) }
+        if let modelError { return .error(modelError) }
+        if !modelReady { return .loadingModel(progress: loadProgress) }
+        if isRecording { return .recording }
+        return pendingTranscriptions > 0 ? .transcribing : .idle
     }
 }

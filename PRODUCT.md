@@ -24,7 +24,7 @@ Closetalk is push-to-talk dictation. Hold the right Command key, talk, let go, a
 
 ## Positioning
 
-Free and fully local leads. Closetalk runs Whisper large-v3 turbo on the Mac's Neural Engine. There is no account, no subscription, and no server: audio, transcripts and clipboard contents never leave the machine. The only network call downloads the model from Hugging Face on first launch.
+Free and fully local leads. Closetalk runs Whisper large-v3 turbo on the Mac's Neural Engine. There is no account, no subscription, and no server: audio, transcripts and clipboard contents never leave the machine. The app goes online only to download the model from Hugging Face on first launch and to check closetalk.dev for updates once a day.
 
 Named competitors: Superwhisper and Wispr Flow.
 
@@ -37,20 +37,20 @@ Supporting differences, in order:
 - Lives in the menu bar only. No Dock icon, no main window.
 - Interaction: hold right Command, hear a start chime, talk, release, hear a stop chime, text is pasted at the cursor. The clipboard is restored two seconds later, and password-manager copies are never put on it.
 - Consecutive dictations land with a space between them. Typing or clicking elsewhere resets that.
-- Menu bar states: downloading or loading the model, ready, recording, transcribing, needs attention. The menu holds a status line, the microphone picker, launch at login, and quit.
+- Menu bar states: downloading or loading the model, ready, recording, transcribing, needs attention. The menu holds a status line, the microphone picker, launch at login, Check for Updates, and quit.
 - First launch: grant microphone and Accessibility permissions, then wait for a 1.5 GB model download and a one-time Neural Engine compile (about 11 minutes on an M1 Max).
-- Distribution: a zip from GitHub Releases. The app is not notarized, so users must click Open Anyway in System Settings on first launch.
+- Distribution: a notarized DMG from GitHub Releases. Sparkle delivers updates from closetalk.dev/appcast.xml.
 
 ## Capabilities and Constraints
 
-- Current assets: menu bar glyphs are SF Symbols (`MenuBarController.swift`). Chimes are the system sounds Tink (start) and Pop (stop). There is no app icon; `Resources/Info.plist` names none.
+- Current assets: menu bar glyphs are SF Symbols (`MenuBarController.swift`). Chimes are the system sounds Tink (start) and Pop (stop). The app icon is `assets/icon.png`, rendered from `assets/src/icon.html`.
 - Brand surfaces in scope: app icon, menu bar glyphs for all five states, README cover, landing page.
 - Menu bar glyphs must read as template images at menu bar size and work in light mode, dark mode and on tinted menu bars.
 
 ## Brand Commitments
 
 - Name: Closetalk. A close-talking mic sits right at your mouth, which matches the hold-and-speak gesture, and the voice stays close, which matches the local promise.
-- Domain: closetalk.dev (chosen, not yet registered). closetalk.app belongs to an unrelated social app called Close Talk; closetalk.com is parked.
+- Domain: closetalk.dev. closetalk.app belongs to an unrelated social app called Close Talk; closetalk.com is parked.
 - Known connotation: "close talker" is a Seinfeld bit about someone who stands too close. Expect the joke; do not lean on it without deciding to.
 
 Everything else is open: the README's first-person maker voice, the right ⌘ key as a symbol, and the cover's dark and amber look are current evidence, free to keep or replace.
@@ -58,7 +58,7 @@ Everything else is open: the README's first-person maker voice, the right ⌘ ke
 ## Evidence on Hand
 
 - `README.md`: product description, install steps, first-launch steps, troubleshooting, privacy statement.
-- `assets/cover.png`, rendered from `assets/src/cover.html`: current cover image.
+- `assets/cover.jpg`, rendered from `assets/src/cover.html`: current cover image.
 - Measured facts usable in copy: text appears about a second after release; built-in mic goes live in under 100 ms; Bluetooth headsets take 0.75 to 1.5 s; model is a 1.5 GB download and about 3 GB on disk; first-launch compile took about 11 minutes on an M1 Max.
 - License: MIT. Source: github.com/gsajith/closetalk.
 - Competitor facts used in the landing page FAQ, checked 2026-10-23 on the vendors' own pages. Wispr Flow: "Transcription always happens in the cloud" (wisprflow.ai/privacy); free plan "2,000/week on desktop" (wisprflow.ai/pricing). Superwhisper (superwhisper.com): free includes "Unlimited use of Whisper models"; Pro adds "Unlimited use of Cloud and Local AI models", own API keys, translation and file transcription. Re-check before launch and whenever the FAQ changes.

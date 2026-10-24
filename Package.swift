@@ -12,7 +12,7 @@ let package = Package(
     targets: [
         // Pure logic, unit tested.
         .target(name: "ClosetalkCore"),
-        // macOS glue: event tap, audio, WhisperKit, paste, menu bar.
+        // macOS glue: event tap, audio, WhisperKit, paste, menu bar, Sparkle updates.
         .executableTarget(
             name: "Closetalk",
             dependencies: [

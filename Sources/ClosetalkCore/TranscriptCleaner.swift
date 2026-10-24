@@ -3,7 +3,7 @@ import Foundation
 /// Turns raw Whisper output into the text we paste, or nil when there is nothing worth pasting.
 public enum TranscriptCleaner {
     /// Phrases Whisper tends to invent for silence or noise. Compared lowercased, without punctuation.
-    static let hallucinations: Set<String> = [
+    private static let hallucinations: Set<String> = [
         "thank you", "thanks for watching", "thank you for watching", "you", "bye",
     ]
 

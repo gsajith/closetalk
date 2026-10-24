@@ -16,6 +16,13 @@ final class HotkeyMonitor {
     private static let systemDefined = CGEventType(rawValue: 14)!
     /// NX_SUBTYPE_AUX_CONTROL_BUTTONS: the media/brightness key subtype of systemDefined events.
     private static let auxControlButtons: Int16 = 8
+    private static let ownPID = Int64(ProcessInfo.processInfo.processIdentifier)
+
+    private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    private static var rightCommandIsDown: Bool {
+        CGEventSource.flagsState(.combinedSessionState).rawValue & rightCommandFlag != 0
+    }
 
     private let onEvent: (HotkeyEvent) -> Void
     private var tap: CFMachPort?
@@ -58,14 +65,6 @@ final class HotkeyMonitor {
 
     private func emit(_ event: HotkeyEvent) {
         DispatchQueue.main.async { self.onEvent(event) }
-    }
-
-    private static let ownPID = Int64(ProcessInfo.processInfo.processIdentifier)
-
-    private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
-
-    private static var rightCommandIsDown: Bool {
-        CGEventSource.flagsState(.combinedSessionState).rawValue & rightCommandFlag != 0
     }
 
     private func handle(type: CGEventType, event: CGEvent) {

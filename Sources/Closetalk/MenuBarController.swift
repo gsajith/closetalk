@@ -69,29 +69,27 @@ final class MenuBarController: NSObject {
     private func rebuildMicrophoneMenu() {
         guard let submenu = microphoneItem.submenu else { return }
         submenu.removeAllItems()
-        let preference = MicrophoneSettings.preference
         let mics = MicrophoneSettings.available().map(\.mic)
-        let selected = preference.resolve(among: mics)
+        let selected = MicrophoneSettings.preference.resolve(among: mics)
 
-        let systemDefault = NSMenuItem(title: "System default", action: #selector(selectMicrophone(_:)), keyEquivalent: "")
-        systemDefault.representedObject = MicrophonePreference.systemDefault.storageValue
-        systemDefault.state = selected == nil ? .on : .off
-        submenu.addItem(systemDefault)
-        submenu.addItem(.separator())
-
-        for mic in mics {
-            let item = NSMenuItem(title: mic.name, action: #selector(selectMicrophone(_:)), keyEquivalent: "")
-            // Choosing the built-in mic stores "built-in" rather than its UID, so it survives UID changes.
-            let choice: MicrophonePreference = mic.isBuiltIn ? .builtIn : .device(uid: mic.uid)
-            item.representedObject = choice.storageValue
-            item.state = mic == selected ? .on : .off
+        func add(_ title: String, _ choice: MicrophonePreference, isOn: Bool) {
+            let item = NSMenuItem(title: title, action: #selector(selectMicrophone(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = choice
+            item.state = isOn ? .on : .off
             submenu.addItem(item)
         }
-        for item in submenu.items { item.target = self }
+        add("System default", .systemDefault, isOn: selected == nil)
+        submenu.addItem(.separator())
+        for mic in mics {
+            // The built-in mic is stored as .builtIn rather than by UID, so the choice survives UID changes.
+            add(mic.name, mic.isBuiltIn ? .builtIn : .device(uid: mic.uid), isOn: mic == selected)
+        }
     }
 
     @objc private func selectMicrophone(_ sender: NSMenuItem) {
-        MicrophoneSettings.preference = MicrophonePreference(storageValue: sender.representedObject as? String)
+        guard let choice = sender.representedObject as? MicrophonePreference else { return }
+        MicrophoneSettings.preference = choice
     }
 
     @objc private func toggleLaunchAtLogin() {

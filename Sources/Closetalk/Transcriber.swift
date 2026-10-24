@@ -3,7 +3,7 @@ import WhisperKit
 
 /// Wraps WhisperKit: downloads the model on first run, keeps it loaded, and transcribes sample buffers.
 actor Transcriber {
-    static let modelVariant = "openai_whisper-large-v3-v20240930_turbo"
+    private static let modelVariant = "openai_whisper-large-v3-v20240930_turbo"
 
     private var whisper: WhisperKit?
 
@@ -20,7 +20,6 @@ actor Transcriber {
     /// Downloads the model if it isn't on disk yet, then loads and warms it up.
     /// Reports download progress as 0...1, then nil once the download is done and loading starts.
     func load(progress: @escaping @Sendable (Double?) -> Void) async throws {
-        let folder = Self.modelFolder
         // Written only after a download finishes, so an interrupted download resumes on the next try.
         let doneMarker = Self.baseFolder.appending(path: "\(Self.modelVariant).complete")
         if !FileManager.default.fileExists(atPath: doneMarker.path) {
@@ -31,7 +30,7 @@ actor Transcriber {
             progress(nil)
         }
         let config = WhisperKitConfig(
-            modelFolder: folder.path,
+            modelFolder: Self.modelFolder.path,
             tokenizerFolder: Self.baseFolder,
             verbose: false,
             logLevel: .error,

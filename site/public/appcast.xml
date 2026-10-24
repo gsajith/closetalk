@@ -9,7 +9,7 @@
             <sparkle:shortVersionString>1.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://closetalk.dev/Closetalk-1.1.zip" length="4613770" type="application/octet-stream" sparkle:edSignature="debEaz3o0QXdXa7FISTUAVVjO63gvwWqsSdFXkIy2h9vPzeLDRbd+onk6L7yJ9irm9hr7fv9QubEw9DMAXzfAg=="/>
+            <enclosure url="https://github.com/gsajith/closetalk/releases/download/v1.1/Closetalk.zip" length="4613770" type="application/octet-stream" sparkle:edSignature="debEaz3o0QXdXa7FISTUAVVjO63gvwWqsSdFXkIy2h9vPzeLDRbd+onk6L7yJ9irm9hr7fv9QubEw9DMAXzfAg=="/>
         </item>
     </channel>
 </rss>
