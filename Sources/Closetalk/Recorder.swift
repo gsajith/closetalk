@@ -72,6 +72,11 @@ final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         }
     }
 
+    /// A copy of the last `seconds` of audio while recording, for the live preview.
+    func recentSamples(seconds: Int) -> [Float] {
+        lock.withLock { Array(samples.suffix(seconds * Self.sampleRate)) }
+    }
+
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let block = CMSampleBufferGetDataBuffer(sampleBuffer) else { return }
         let count = CMBlockBufferGetDataLength(block) / MemoryLayout<Float>.size

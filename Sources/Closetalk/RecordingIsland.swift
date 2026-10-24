@@ -10,16 +10,20 @@ final class IslandModel {
 
     var phase = Phase.recording
     var levels = WaveformLevels()
+    /// The live preview's latest words, nil until the first ones come in.
+    var transcript: String?
     /// Drives the appear and disappear animation of the pill inside the panel.
     var isVisible = false
 }
 
 /// The small pill near the top of the screen while Closetalk listens: live bars while recording, a
-/// spinner while transcribing. It must never take focus, because dictation pastes into whatever app is in
-/// front, so it's a non-activating panel that ignores the mouse.
+/// pulsing dots while transcribing. Once the live preview has words, it widens to show them under the bars.
+/// It must never take focus, because dictation pastes into whatever app is in front, so it's a
+/// non-activating panel that ignores the mouse.
 @MainActor
 final class RecordingIsland {
-    private static let size = NSSize(width: 120, height: 36)
+    /// Room for the island at its largest. The panel is clear where the island doesn't draw.
+    private static let size = NSSize(width: IslandLayout.wideWidth, height: IslandLayout.wideHeight)
     /// Gap between the menu bar (or notch) and the pill.
     private static let topGap: CGFloat = 8
 
@@ -44,9 +48,11 @@ final class RecordingIsland {
     func showRecording() {
         model.phase = .recording
         model.levels = WaveformLevels()
+        model.transcript = nil
         show()
     }
 
+    /// Keeps the preview's words up until the text lands.
     func showTranscribing() {
         model.phase = .transcribing
         show()
@@ -103,25 +109,83 @@ private extension CGRect {
     var area: CGFloat { isNull ? 0 : width * height }
 }
 
+private enum IslandLayout {
+    static let pillWidth: CGFloat = 120
+    static let pillHeight: CGFloat = 36
+    static let wideWidth: CGFloat = 320
+    static let textInset: CGFloat = 16
+    static let fontSize: CGFloat = 13
+    /// Two lines of preview text.
+    static let textHeight = 2 * NSLayoutManager().defaultLineHeight(for: .systemFont(ofSize: fontSize))
+    static let textBottomInset: CGFloat = 12
+    static let wideHeight = pillHeight + textHeight + textBottomInset
+}
+
 private struct IslandView: View {
     let model: IslandModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            Capsule().fill(.black.opacity(0.85))
-            Capsule().strokeBorder(.white.opacity(0.12))
-            switch model.phase {
-            case .recording: Bars(levels: model.levels.values)
-            case .transcribing: ThinkingDots(animated: !reduceMotion)
+        let wide = model.transcript != nil
+        // At pill height, a rounded rectangle with this radius is the pill, so widening is only a size change.
+        let shape = RoundedRectangle(cornerRadius: IslandLayout.pillHeight / 2, style: .continuous)
+        VStack(spacing: 0) {
+            Group {
+                switch model.phase {
+                case .recording: Bars(levels: model.levels.values)
+                case .transcribing: ThinkingDots(animated: !reduceMotion)
+                }
+            }
+            .frame(height: IslandLayout.pillHeight)
+            if let transcript = model.transcript {
+                TranscriptLines(text: transcript)
+                    .padding(.horizontal, IslandLayout.textInset)
+                    .transition(.opacity)
             }
         }
-        .frame(width: 120, height: 36)
+        .frame(width: wide ? IslandLayout.wideWidth : IslandLayout.pillWidth,
+               height: wide ? IslandLayout.wideHeight : IslandLayout.pillHeight, alignment: .top)
+        .background {
+            shape.fill(.black.opacity(0.85))
+            shape.strokeBorder(.white.opacity(0.12))
+        }
+        .clipShape(shape)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: wide)
         .shadow(color: .black.opacity(0.3), radius: 6, y: 2)
         .opacity(model.isVisible ? 1 : 0)
-        .scaleEffect(model.isVisible || reduceMotion ? 1 : 0.8)
+        .scaleEffect(model.isVisible || reduceMotion ? 1 : 0.8, anchor: .top)
         .animation(.snappy(duration: 0.2), value: model.isVisible)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
+    }
+}
+
+/// Two lines of the live preview. Text that fits sits at the top; longer text keeps its newest words
+/// on the bottom line and lets the older ones run off the top, fading out.
+private struct TranscriptLines: View {
+    let text: String
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            lines.frame(maxHeight: .infinity, alignment: .topLeading)
+            // A fixed height, unlike maxHeight, stays smaller than the text, so the clip has work to do.
+            lines
+                .frame(height: IslandLayout.textHeight, alignment: .bottomLeading)
+                .clipped()
+                .mask {
+                    LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.4)],
+                                   startPoint: .top, endPoint: .bottom)
+                }
+        }
+        .frame(height: IslandLayout.textHeight)
+    }
+
+    private var lines: some View {
+        Text(text)
+            .font(.system(size: IslandLayout.fontSize))
+            .foregroundStyle(.white.opacity(0.9))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
