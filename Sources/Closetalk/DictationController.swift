@@ -246,7 +246,7 @@ final class DictationController {
         }
     }
 
-    /// Between recordings the island shows a spinner until every pending transcription has landed.
+    /// Between recordings the island shows pulsing dots until every pending transcription has landed.
     /// While recording, the recording branch shows it once the key is held past a quick tap.
     private func settleIsland() {
         guard !isRecording else { return }

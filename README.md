@@ -46,6 +46,8 @@ The build script creates a local code signing certificate called "Closetalk Dev"
 3. Pick the key you'll hold while you talk, like fn, right ⌘ or a combo like ⌃⌥Space.
 4. Wait for the model. Closetalk downloads 1.5 GB and gets it ready, which can take 10 minutes or more. It happens once. Later launches are ready in a few seconds. Meanwhile a small sample model lets you try dictation within about 30 seconds. It's less accurate, so wait for the full model before relying on it.
 
+While you hold the key, a small pill under the menu bar shows your voice, then pulsing dots until the text appears.
+
 The menu bar icon shows where things stand:
 
 | Icon | Meaning |
