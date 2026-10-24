@@ -6,12 +6,12 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 
 ## What it does
 
-- **Push to talk on right Command.** A soft chime means the mic is live. A second chime means it stopped.
-- **Pastes where you're typing.** Closetalk puts your clipboard back two seconds later, so whatever you had copied is still there. If that was a password from a password manager, it stays off the clipboard.
-- **Leaves your shortcuts alone.** Right ⌘C, ⌘Tab and friends work as usual and paste nothing. A quick tap does nothing either. The mic does open for a moment when you press right Command, so you may see the orange mic dot flash.
-- **Keeps your words.** Closetalk removes "um" and "uh" and nothing else. No AI rewrite, so `foo()` and `args[0]` come through as you said them.
-- **Spaces dictations for you.** Talk in bursts and each one lands with a space before it. Typing or clicking elsewhere resets that.
-- **Lets you pick the mic.** It uses your Mac's built-in mic by default, which starts in under 100 ms. Bluetooth headsets like AirPods take 0.75 to 1.5 s to switch into headset mode.
+- **Chimes.** One when the mic goes live, another when it stops.
+- **Restores your clipboard.** Whatever you had copied comes back two seconds after the paste, except passwords from a password manager.
+- **Leaves your shortcuts alone.** Right ⌘C, ⌘Tab and quick taps work as usual and paste nothing.
+- **Keeps your words.** It removes "um" and "uh" and nothing else, so `foo()` comes through as you said it.
+- **Spaces your bursts.** Each dictation lands with a space before it.
+- **Defaults to the built-in mic.** It starts in under 100 ms. AirPods take up to 1.5 s.
 
 ## Requirements
 
@@ -62,6 +62,8 @@ The menu also has the microphone picker, a launch at login toggle and Check for 
 **Nothing happens when I hold right Command in Terminal or iTerm.** Turn off Secure Keyboard Entry in that app's menu. While it's on, macOS hides keystrokes from every other app, Closetalk included.
 
 **The first words get cut off.** You're probably on a Bluetooth mic. Wait for the first chime before talking, or switch to the built-in mic in the menu.
+
+**The orange mic dot flashes when I use a right ⌘ shortcut.** Closetalk opens the mic the moment you press right Command, so it doesn't miss your first word. A shortcut or a quick tap cancels the recording, and nothing gets transcribed.
 
 **The menu still asks for Accessibility after I turned it on.** You probably granted it to an older copy of the app. Remove Closetalk from the Accessibility list with the minus button, then add `/Applications/Closetalk.app` again.
 
