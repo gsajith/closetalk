@@ -55,11 +55,13 @@ The menu bar icon shows where things stand:
 | Waveform | Transcribing |
 | Warning triangle | Needs attention. Open the menu to see why. |
 
-The menu also has the microphone picker, a launch at login toggle and Check for Updates.
+The menu also has the microphone picker, a choice of dictation key (right ⌘, right ⌥ or fn), a launch at login toggle and Check for Updates.
 
 ## Troubleshooting
 
 **Nothing happens when I hold right Command in Terminal or iTerm.** Turn off Secure Keyboard Entry in that app's menu. While it's on, macOS hides keystrokes from every other app, Closetalk included.
+
+**Holding fn opens the emoji picker or starts macOS Dictation.** In System Settings > Keyboard, set "Press 🌐 key to" to Do Nothing.
 
 **The first words get cut off.** You're probably on a Bluetooth mic. Wait for the first chime before talking, or switch to the built-in mic in the menu.
 

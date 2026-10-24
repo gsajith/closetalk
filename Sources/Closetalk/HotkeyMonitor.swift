@@ -9,9 +9,6 @@ let syntheticEventTag: Int64 = 0x4C57
 /// The tap runs on its own thread: an active tap holds up every keystroke on the system until it returns,
 /// so it must never wait on the main thread (e.g. while the mic starts).
 final class HotkeyMonitor {
-    private static let rightCommandKeyCode: Int64 = 54
-    /// Device-dependent flag bit for the right Command key (NX_DEVICERCMDKEYMASK).
-    private static let rightCommandFlag: UInt64 = 0x10
     /// NX_SYSDEFINED: media and brightness keys arrive as this type, not keyDown.
     private static let systemDefined = CGEventType(rawValue: 14)!
     /// NX_SUBTYPE_AUX_CONTROL_BUTTONS: the media/brightness key subtype of systemDefined events.
@@ -20,8 +17,8 @@ final class HotkeyMonitor {
 
     private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
-    private static var rightCommandIsDown: Bool {
-        CGEventSource.flagsState(.combinedSessionState).rawValue & rightCommandFlag != 0
+    private static var keyIsDown: Bool {
+        CGEventSource.flagsState(.combinedSessionState).rawValue & DictationKeySettings.key.flagMask != 0
     }
 
     private let onEvent: (HotkeyEvent) -> Void
@@ -73,16 +70,17 @@ final class HotkeyMonitor {
             // macOS turns slow or interrupted taps off; turn it back on.
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             // A release that happened while we were off would leave a recording running forever.
-            if !Self.rightCommandIsDown { emit(.rightCommandUp(Self.now)) }
+            if !Self.keyIsDown { emit(.keyUp(Self.now)) }
         case _ where event.getIntegerValueField(.eventSourceUserData) == syntheticEventTag:
             break
         case _ where type != .flagsChanged && event.getIntegerValueField(.eventTargetUnixProcessID) == Self.ownPID:
             // Clicks and keys in our own menu can't move the cursor in the app being dictated into.
             break
         case .flagsChanged:
-            guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCommandKeyCode else { return }
-            let isDown = event.flags.rawValue & Self.rightCommandFlag != 0
-            emit(isDown ? .rightCommandDown(Self.now) : .rightCommandUp(Self.now))
+            let key = DictationKeySettings.key
+            guard event.getIntegerValueField(.keyboardEventKeycode) == key.keyCode else { return }
+            let isDown = event.flags.rawValue & key.flagMask != 0
+            emit(isDown ? .keyDown(Self.now) : .keyUp(Self.now))
         case .scrollWheel:
             // Momentum scrolling keeps firing after the fingers lift; only a real scroll counts.
             if event.getIntegerValueField(.scrollWheelEventMomentumPhase) == 0 { emit(.otherInput) }
