@@ -23,8 +23,6 @@ final class DictationController {
     private var machine = HotkeyStateMachine()
     private var spacing = SpacingPolicy()
     private var monitor: HotkeyMonitor?
-    /// Open while someone records a new shortcut.
-    private var shortcutWindow: ShortcutRecorderWindow?
     private var modelReady = false
     private var isRecording = false
     /// Bumped per recording so a late "mic is live" callback from a cancelled recording is ignored.
@@ -39,7 +37,6 @@ final class DictationController {
     init(menuBar: MenuBarController, setup: SetupModel) {
         self.menuBar = menuBar
         self.setup = setup
-        menuBar.onChangeShortcut = { [weak self] in self?.openShortcutWindow() }
         setup.startRecordingShortcut = { [weak self] onStep in self?.recordShortcut(onStep: onStep) ?? false }
         setup.stopRecordingShortcut = { [weak self] in self?.stopRecordingShortcut() }
     }
@@ -136,33 +133,6 @@ final class DictationController {
         monitor?.listen(for: shortcut)
         setup.refreshStatus()
         refreshMenu()
-    }
-
-    /// Change shortcut… in the menu records in a small window of its own.
-    private func openShortcutWindow() {
-        if let shortcutWindow { return shortcutWindow.show() }
-        let window = ShortcutRecorderWindow(current: DictationShortcutSettings.shortcut?.name ?? "") { [weak self] in
-            // Closed without saving, or closed after saving: either way go back to the saved shortcut.
-            guard let self, shortcutWindow != nil else { return }
-            shortcutWindow = nil
-            stopRecordingShortcut()
-        }
-        guard recordShortcut(onStep: { [weak self] step in self?.showInWindow(step) }) else { return refreshMenu() }
-        shortcutWindow = window
-        window.show()
-    }
-
-    private func showInWindow(_ step: ShortcutRecorder.Step) {
-        switch step {
-        case .recording(let held): shortcutWindow?.showHeld(held)
-        case .refused: shortcutWindow?.showRefused()
-        case .cancelled: shortcutWindow?.close()
-        case .done(let shortcut):
-            let window = shortcutWindow
-            // Cleared first so closing the window doesn't reset the listener mid-hold.
-            shortcutWindow = nil
-            window?.showSaved(shortcut.name)
-        }
     }
 
     private func handle(_ event: HotkeyEvent) {

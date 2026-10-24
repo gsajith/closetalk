@@ -19,7 +19,7 @@ final class MenuBarController: NSObject {
     private let openSetup: () -> Void
     private let microphoneItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
     private let shortcutItem = NSMenuItem(title: "Change dictation key…", action: #selector(changeShortcut), keyEquivalent: "")
-    /// Called when someone picks Change shortcut…; DictationController opens the recorder.
+    /// Called when someone picks Change dictation key…; the app opens Setup on that step.
     var onChangeShortcut: (() -> Void)?
     private let loginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
 
