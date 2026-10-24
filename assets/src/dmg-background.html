@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- Source for assets/dmg-background.png, the DMG window's background. Render with scripts/render-assets.sh.
+     Icon spots match scripts/dmg-settings.py: Closetalk centered at (170, 210), Applications at (490, 210). -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="render" content="660x420@2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=block">
+<style>
+  :root {
+    --paper: #f2eadf;
+    --pink: #ed269d;
+    --blue: #1c81c3;
+    --purple: #4a147d; /* where pink and blue overprint */
+    --purple-2: #5f3f80;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 660px; height: 420px; }
+  body {
+    position: relative; overflow: hidden;
+    background: var(--paper) url("../../site/public/paper.jpg") 0 0 / 660px auto;
+    font-family: "Bricolage Grotesque", "Helvetica Neue", sans-serif;
+    text-align: center;
+  }
+  .ink { filter: url(#ink); mix-blend-mode: multiply; }
+
+  /* One plate: at this size a second, offset plate makes the words hard to read. */
+  .title { position: absolute; left: 0; right: 0; top: 46px; font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: var(--purple); }
+
+  .arrow { position: absolute; left: 0; top: 0; width: 660px; height: 420px; }
+  .arrow path { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+
+  .note { position: absolute; left: 0; right: 0; bottom: 52px; font-size: 15px; font-weight: 500; color: var(--purple-2); }
+</style>
+</head>
+<body>
+  <h1 class="title ink">Drag Closetalk into Applications</h1>
+
+  <svg class="arrow" viewBox="0 0 660 420">
+    <g class="ink" transform="translate(-3 2)"><path stroke="#ed269d" d="M262 214 C 320 186, 352 186, 400 206 M384 186 L 404 207 L 378 220"/></g>
+    <g class="ink"><path stroke="#1c81c3" d="M262 214 C 320 186, 352 186, 400 206 M384 186 L 404 207 L 378 220"/></g>
+  </svg>
+
+  <p class="note ink">Then open Closetalk from Applications. It walks you through setup.</p>
+
+  <!-- Ink grain, as in cover.html: roughens the edges and knocks small specks out of the solids. -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="ink" x="-5%" y="-10%" width="110%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="warp"/>
+      <feDisplacementMap in="SourceGraphic" in2="warp" scale="2.5" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="2" result="grain"/>
+      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 2.6" result="mask"/>
+      <feComposite in="rough" in2="mask" operator="in"/>
+    </filter>
+  </svg>
+</body>
+</html>
