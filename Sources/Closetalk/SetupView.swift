@@ -93,7 +93,6 @@ struct SetupView: View {
                 Done("Accessibility is on.")
             } else {
                 Button("Open System Settings", action: model.openAccessibilitySettings).buttonStyle(.borderedProminent)
-                Note("This step ticks off on its own when you turn it on.")
             }
         }
     }
@@ -146,7 +145,6 @@ struct SetupView: View {
             Text("Say anything, then let go. Your words land here, the same way they will in any app.")
                 .foregroundStyle(.secondary)
             PracticeField(text: $model.practiceText)
-            Note("Works in Terminal, VS Code, Claude Code, ChatGPT, Slack, and anywhere else you can type.")
         }
     }
 
@@ -207,7 +205,7 @@ private struct PracticeField: View {
         TextEditor(text: $text)
             .font(.body)
             .focused($focused)
-            .frame(height: 96)
+            .frame(height: 54) // about three lines
             .scrollContentBackground(.hidden)
             .padding(6)
             .background(.background, in: .rect(cornerRadius: 6))

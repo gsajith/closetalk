@@ -93,12 +93,13 @@ final class DictationController {
         }
     }
 
-    /// The tap needs Accessibility. Until it's granted, retry every couple of seconds.
+    /// The tap needs Accessibility. Until it's granted, retry every couple of seconds. Trying to create
+    /// the tap without it makes macOS show its own prompt, so wait until it's on: the setup window asks.
     private func startMonitor() {
         let monitor = HotkeyMonitor(shortcut: DictationShortcutSettings.shortcut) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
         }
-        if monitor.start() {
+        if AXIsProcessTrusted(), monitor.start() {
             self.monitor = monitor
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.startMonitor() }
