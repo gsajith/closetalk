@@ -14,17 +14,13 @@ export default function Privacy() {
       <h1 className="inked">Privacy</h1>
       <h2>The app</h2>
       <p>
-        Closetalk goes online for two things: downloading the speech model and its tokenizer from Hugging Face the
-        first time you launch it, and checking closetalk.dev for updates once a day. The update check downloads a small
-        feed file and sends nothing about you or what you dictate. Dictation works offline.
+        Closetalk goes online for two things: downloading the speech model from Hugging Face the first time you
+        launch it, and checking closetalk.dev for updates once a day. The update check sends nothing about
+        you or what you dictate. Dictation works offline.
       </p>
       <p>
-        Audio, transcripts and clipboard contents stay on your Mac. Audio is held in memory only while you&apos;re
-        dictating and is never written to disk. Closetalk has no account and no telemetry.
-      </p>
-      <p>
-        Closetalk puts your clipboard back two seconds after it pastes. If what you had copied was a password from a
-        password manager, Closetalk leaves it off rather than putting it back.
+        Audio, transcripts and clipboard contents stay on your Mac. Closetalk keeps audio in memory only while
+        you&apos;re dictating and never writes it to disk. Closetalk has no account and no telemetry.
       </p>
       <h2>This website</h2>
       <p>

@@ -24,7 +24,7 @@ const APP_JSON_LD = {
 
 const FACTS: [string, string][] = [
   ["Model", "Whisper large-v3 turbo"],
-  ["Where it runs", "Your Mac's Neural Engine"],
+  ["Where it runs", "Your Mac"],
   ["Network use", "A 1.5 GB model download on first launch, then a daily update check"],
   ["Account", "None"],
   ["Price", "Free, MIT licensed"],
@@ -44,13 +44,8 @@ const QUESTIONS: [string, React.ReactNode][] = [
   [
     "Which apps does it work in?",
     <>
-      Anywhere you can type: Terminal, VS Code, Claude Code, ChatGPT, Slack, your browser. It pastes at your cursor
-      and puts your clipboard back two seconds later.
+      Anywhere you can type: Terminal, VS Code, Claude Code, ChatGPT, Slack, your browser.
     </>,
-  ],
-  [
-    "Will my keyboard shortcuts still work?",
-    <>Yes. Right ⌘C, ⌘Tab and the rest work as usual, and a quick tap does nothing.</>,
   ],
   [
     "Is it really free?",

@@ -2,16 +2,12 @@
 
 [Closetalk](https://closetalk.dev) ([closetalk.dev](https://closetalk.dev)) is push-to-talk dictation for your Mac. Hold the right Command key, say what you want, and let go. About a second later the text appears wherever your cursor is: a terminal, VS Code, Claude Code, Slack, a browser.
 
-It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your voice never leaves the machine, there's no account, and it costs nothing. I built it as a free stand-in for Superwhisper and Wispr Flow, mostly for talking to coding agents.
+It runs OpenAI's Whisper model on your Mac. Your voice never leaves the machine, there's no account, and it costs nothing. I built it as a free stand-in for Superwhisper and Wispr Flow, mostly for talking to coding agents.
 
 ## What it does
 
 - **Chimes.** One when the mic goes live, another when it stops.
-- **Restores your clipboard.** Whatever you had copied comes back two seconds after the paste, except passwords from a password manager.
-- **Leaves your shortcuts alone.** Right ⌘C, ⌘Tab and quick taps work as usual and paste nothing.
 - **Keeps your words.** It removes "um" and "uh" and nothing else, so `foo()` comes through as you said it.
-- **Spaces your bursts.** Each dictation lands with a space before it.
-- **Defaults to the built-in mic.** It starts in under 100 ms. AirPods take up to 1.5 s.
 
 ## Requirements
 
@@ -43,7 +39,7 @@ The build script creates a local code signing certificate called "Closetalk Dev"
 
 1. Allow microphone access when macOS asks.
 2. Turn on Closetalk in System Settings > Privacy & Security > Accessibility. It needs this to see the right Command key and to paste. No restart needed.
-3. Wait for the model. Closetalk downloads 1.5 GB, then macOS compiles it for the Neural Engine. On an M1 Max that took about 11 minutes in total. It happens once. Later launches are ready in a few seconds.
+3. Wait for the model. Closetalk downloads 1.5 GB and gets it ready, which took about 11 minutes on an M1 Max. It happens once. Later launches are ready in a few seconds.
 
 The menu bar icon shows where things stand:
 
@@ -67,11 +63,11 @@ The menu also has the microphone picker, a launch at login toggle and Check for 
 
 **The menu still asks for Accessibility after I turned it on.** You probably granted it to an older copy of the app. Remove Closetalk from the Accessibility list with the minus button, then add `/Applications/Closetalk.app` again.
 
-**It's stuck on "Loading model…".** On the first launch that's the Neural Engine compile, which can take 10 minutes or more. If it says it failed, it retries every 30 seconds.
+**It's stuck on "Loading model…".** On the first launch, getting the model ready can take 10 minutes or more. If it says it failed, it retries every 30 seconds.
 
 ## Privacy
 
-Closetalk goes online for two things: downloading the model and its tokenizer from Hugging Face on first launch, and checking closetalk.dev for updates once a day. The update check downloads a small feed file and sends nothing about you or what you dictate. Audio, transcripts and clipboard contents stay on your Mac. Closetalk keeps audio in memory only while you're dictating and never writes it to disk.
+Closetalk goes online for two things: downloading the speech model from Hugging Face on first launch, and checking closetalk.dev for updates once a day. The update check sends nothing about you or what you dictate. Audio, transcripts and clipboard contents stay on your Mac. Closetalk keeps audio in memory only while you're dictating and never writes it to disk.
 
 ## For developers
 
