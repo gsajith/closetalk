@@ -229,7 +229,8 @@ final class DictationController {
     private var state: AppState {
         if monitor == nil { return .error("Needs Accessibility permission") }
         // Checked fresh each time, so turning the mic on in System Settings clears it without a relaunch.
-        if [.denied, .restricted].contains(AVCaptureDevice.authorizationStatus(for: .audio)) {
+        // AVCaptureDevice.authorizationStatus would keep its first answer, so this asks AVAudioApplication.
+        if AVAudioApplication.shared.recordPermission == .denied {
             return .error("Needs Microphone permission")
         }
         if let modelError { return .error(modelError) }
