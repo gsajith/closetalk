@@ -6,7 +6,10 @@ import AVFoundation
 /// The capture session converts to 16 kHz itself, whatever the device does.
 /// The mic is only open between start() and stop(), so the macOS mic indicator stays off when idle.
 final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
-    /// Starting and stopping block for tens of milliseconds, so they run here instead of the main thread.
+    static let sampleRate = 16_000
+
+    /// startRunning and stopRunning block for tens of milliseconds. start() hands them to this queue
+    /// and returns; stop() waits for them, because it returns the audio.
     private let sessionQueue = DispatchQueue(label: "Closetalk.Recorder.session")
     private let bufferQueue = DispatchQueue(label: "Closetalk.Recorder.buffers")
     private var session: AVCaptureSession?  // sessionQueue only
@@ -26,7 +29,7 @@ final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         let output = AVCaptureAudioDataOutput()
         output.audioSettings = [
             AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: 16_000,
+            AVSampleRateKey: Self.sampleRate,
             AVNumberOfChannelsKey: 1,
             AVLinearPCMBitDepthKey: 32,
             AVLinearPCMIsFloatKey: true,
@@ -40,7 +43,7 @@ final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         session.addOutput(output)
 
         lock.withLock {
-            samples.removeAll(keepingCapacity: true)
+            samples.removeAll()
             self.onFirstAudio = onFirstAudio
         }
         sessionQueue.async {
@@ -65,11 +68,13 @@ final class Recorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let block = CMSampleBufferGetDataBuffer(sampleBuffer) else { return }
-        let length = CMBlockBufferGetDataLength(block)
-        guard length > 0 else { return }
-        var chunk = [Float](repeating: 0, count: length / MemoryLayout<Float>.size)
-        guard chunk.withUnsafeMutableBytes({ CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: length, destination: $0.baseAddress!) }) == noErr
-        else { return }
+        let count = CMBlockBufferGetDataLength(block) / MemoryLayout<Float>.size
+        guard count > 0 else { return }
+        var chunk = [Float](repeating: 0, count: count)
+        let status = chunk.withUnsafeMutableBytes {
+            CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: $0.count, destination: $0.baseAddress!)
+        }
+        guard status == noErr else { return }
 
         // Some devices deliver pure zeros while they spin up; wait for a non-zero sample.
         let callback: (() -> Void)? = lock.withLock {

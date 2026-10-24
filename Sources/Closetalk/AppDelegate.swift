@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         updater = Updater()
         menuBar = MenuBarController(updatesItem: updater.menuItem)
-        requestPermissions()
+        promptForAccessibility()
         dictation = DictationController(menuBar: menuBar)
         dictation.start()
     }
@@ -18,8 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Inserter.flushPendingRestore()
     }
 
-    private func requestPermissions() {
-        // Shows the system prompt pointing at System Settings if we're not trusted yet.
+    private func promptForAccessibility() {
+        // Shows the system prompt pointing at System Settings if Accessibility isn't granted yet.
+        // The microphone prompt comes from DictationController.start().
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
     }
