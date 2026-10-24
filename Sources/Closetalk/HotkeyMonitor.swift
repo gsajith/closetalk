@@ -155,8 +155,9 @@ final class HotkeyMonitor {
         guard case .listening(var matcher?) = mode else { return }
         let flags = CGEventSource.flagsState(.combinedSessionState).rawValue
         var events = [matcher.handle(.flagsChanged(flags: flags), at: Self.now).event]
-        if case .key(let code, _, _) = matcher.shortcut,
-           !CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(code)) {
+        // The stored code comes from a key event, so it fits, but a bad value shouldn't crash the tap.
+        if case .key(let code, _, _) = matcher.shortcut, let key = CGKeyCode(exactly: code),
+           !CGEventSource.keyState(.combinedSessionState, key: key) {
             events.append(matcher.handle(.keyUp(code: code, flags: flags), at: Self.now).event)
         }
         mode = .listening(matcher)

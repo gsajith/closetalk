@@ -19,12 +19,14 @@ struct KeyboardLayout {
     /// What the key types with no modifiers held, or nil for keys that type nothing visible, like F-keys,
     /// which come back as control characters.
     func characters(for keyCode: Int64) -> String? {
+        // Any app can post a key event, with any code. Out of range means no key, not a crash.
+        guard let key = UInt16(exactly: keyCode) else { return nil }
         var deadKeyState: UInt32 = 0
         var length = 0
         var characters = [UniChar](repeating: 0, count: 4)
         let status = data.withUnsafeBytes { raw in
             UCKeyTranslate(
-                raw.baseAddress!.assumingMemoryBound(to: UCKeyboardLayout.self), UInt16(keyCode),
+                raw.baseAddress!.assumingMemoryBound(to: UCKeyboardLayout.self), key,
                 UInt16(kUCKeyActionDisplay), 0, keyboardType, OptionBits(kUCKeyTranslateNoDeadKeysBit),
                 &deadKeyState, characters.count, &length, &characters)
         }
