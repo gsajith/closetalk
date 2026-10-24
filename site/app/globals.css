@@ -32,16 +32,14 @@ p { margin: 0; }
 .inked { filter: url(#ink); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* Masthead: the wordmark is printed twice, pink then blue, slightly off register. */
+/* Masthead: the wordmark prints in two plates like the headings (see .print below). */
 .masthead {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   max-width: 1240px; margin: 0 auto; padding-block: 22px; padding-left: var(--gutter); padding-right: var(--gutter-r);
 }
 .wordmark { position: relative; display: inline-block; text-decoration: none; font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
-.plate { filter: url(#ink); mix-blend-mode: multiply; white-space: nowrap; }
-.plate-pink { position: absolute; left: 0; top: 0; color: var(--pink); transform: translate(-3px, 2px); }
-.plate-blue { position: relative; color: var(--blue); }
-.wordmark:hover .plate-pink { transform: translate(-5px, 3px); }
+.wordmark { white-space: nowrap; }
+.wordmark:hover::before { transform: translate(-5px, 3px); }
 .masthead nav { display: flex; align-items: center; gap: 22px; font-weight: 600; font-size: 16px; }
 .masthead nav a { text-decoration-color: transparent; }
 .masthead nav a:hover { text-decoration-color: var(--pink); }
@@ -58,7 +56,6 @@ p { margin: 0; }
 .stage { container-type: inline-size; width: min(100%, calc((100svh - 430px) * 1200 / 500)); min-width: min(100%, 860px); margin: 14px auto 0; }
 .diagram { position: relative; aspect-ratio: 1200 / 500; text-align: left; }
 .diagram-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.mic { mix-blend-mode: multiply; }
 .leader polyline { fill: none; stroke: var(--blue); stroke-width: 1.75; stroke-linejoin: round; transition: stroke 160ms ease-out, stroke-width 160ms ease-out; }
 .pin { fill: var(--paper-light); stroke: var(--blue); stroke-width: 2.5; transition: fill 160ms ease-out, stroke 160ms ease-out; }
 .pin-dot { fill: var(--blue); transition: fill 160ms ease-out; }
@@ -70,7 +67,6 @@ p { margin: 0; }
 .callout-right { right: 0; }
 .callout h2 { font-size: clamp(17px, 1.9cqw, 23px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; transition: color 160ms ease-out; }
 .callout p { margin-top: 6px; font-size: clamp(14px, 1.4cqw, 16.5px); line-height: 1.45; color: var(--purple-2); }
-.callout-letter { display: none; }
 
 /* A callout lights up its line in pink ink on hover, and "Hold right ⌘" lights up while you hold the key. */
 .diagram:has(.callout[data-id="local"]:hover) .leader[data-for="local"],
@@ -104,12 +100,15 @@ p { margin: 0; }
 .section { max-width: 1080px; margin: 0 auto; padding-block: 104px 0; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 .section h2 { font-size: clamp(32px, 4.2vw, 54px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.04; }
 
-/* Section headings print in two plates off register, like the wordmark. The pink copy is hidden from
-   screen readers; both copies wrap identically because they share one box. */
+/* Two-plate print for the wordmark and section headings: the blue plate is the real text, the pink
+   plate is drawn from data-print, off register. The empty alt text after the slash keeps screen
+   readers from reading the pink copy. Both plates wrap identically because they share one box. */
 .print { position: relative; }
-.print span { display: block; mix-blend-mode: multiply; filter: url(#ink); }
-.print .ink-pink { position: absolute; inset: 0; color: var(--pink); transform: translate(-3px, 2px); }
-.print .ink-blue { position: relative; color: var(--blue); }
+.print::before { content: attr(data-print) / ""; position: absolute; inset: 0; color: var(--pink); transform: translate(-3px, 2px); mix-blend-mode: multiply; filter: url(#ink); }
+.print > span { position: relative; display: block; color: var(--blue); mix-blend-mode: multiply; filter: url(#ink); }
+/* Section headings print their text plate in purple, the overprint color: light blue at display size
+   was hard to read. The wordmark keeps the blue plate. */
+.section .print > span { color: var(--purple); }
 
 .why { display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: start; }
 .why-copy { display: grid; gap: 22px; }
@@ -173,7 +172,7 @@ p { margin: 0; }
   .callout { position: static; width: auto; text-align: left; }
   .callout h2 { font-size: 21px; }
   .callout p { font-size: 16px; }
-  .callout-letter { display: inline-block; margin-right: 8px; color: var(--pink); }
+  .callout h2::before { content: attr(data-letter) / ""; margin-right: 8px; color: var(--pink); }
   .why { grid-template-columns: 1fr; gap: 36px; }
   .facts { padding: 10px 18px; }
   .steps { grid-template-columns: 1fr; gap: 28px; }
