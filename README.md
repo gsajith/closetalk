@@ -112,7 +112,7 @@ scripts/package.sh
 scripts/notarize.sh build/Closetalk.dmg
 ```
 
-Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, and upload the files it lists to closetalk.dev. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
+Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, and merge the feed changes it lists through a PR. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
 
 Self-signed builds turn off hardened runtime's library validation, because macOS only loads Sparkle.framework from the same Apple Team ID and a self-signed certificate has none. Developer ID builds keep it on.
 
@@ -123,11 +123,11 @@ Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](h
 For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. `scripts/release.sh` adds the release zip to the appcast like this:
 
 ```sh
-mkdir -p updates && cp build/Closetalk.zip updates/Closetalk-<version>.zip
-.build/artifacts/sparkle/Sparkle/bin/generate_appcast updates
+cp build/Closetalk.zip site/public/Closetalk-<version>.zip
+.build/artifacts/sparkle/Sparkle/bin/generate_appcast site/public
 ```
 
-`generate_appcast` signs the zip with the key from the keychain, makes `.delta` files for small upgrades from earlier versions, and writes `updates/appcast.xml`. Its download links point next to the feed, at `https://closetalk.dev/<file>`, so upload everything in `updates` to the root of closetalk.dev except `old_updates`, not just `appcast.xml`. Keep the `updates` folder between releases so the feed keeps its history. It's gitignored, so it lives only in your checkout.
+`generate_appcast` signs the zip with the key from the keychain, makes `.delta` files for small upgrades from earlier versions, and writes `site/public/appcast.xml`. Its download links point next to the feed, at `https://closetalk.dev/<file>`. Commit the new appcast, zip and `.delta` files, and the site deploy serves them from the root of closetalk.dev. `generate_appcast` moves archives that drop out of the feed to `site/public/old_updates`, which is gitignored.
 
 ## License
 
