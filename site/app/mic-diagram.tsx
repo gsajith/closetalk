@@ -31,7 +31,7 @@ const CALLOUTS: Callout[] = [
     top: 120,
     pin: [496, 197],
     title: "Runs on your Mac",
-    body: "Whisper runs on the Neural Engine. Nothing you say goes to a server.",
+    body: "Nothing you say goes to a server, and it works offline.",
   },
   {
     id: "words",
