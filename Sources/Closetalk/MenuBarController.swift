@@ -18,7 +18,7 @@ final class MenuBarController: NSObject {
     private let setupItem = NSMenuItem(title: "Setup…", action: #selector(showSetup), keyEquivalent: "")
     private let openSetup: () -> Void
     private let microphoneItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
-    private let shortcutItem = NSMenuItem(title: "Change shortcut…", action: #selector(changeShortcut), keyEquivalent: "")
+    private let shortcutItem = NSMenuItem(title: "Change dictation key…", action: #selector(changeShortcut), keyEquivalent: "")
     /// Called when someone picks Change shortcut…; DictationController opens the recorder.
     var onChangeShortcut: (() -> Void)?
     private let loginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
@@ -54,7 +54,7 @@ final class MenuBarController: NSObject {
         case .loadingModel(let p?): ("arrow.down.circle", "Downloading model… \(Int(p * 100))%", nil)
         // The first load compiles the model for the Neural Engine, which can take minutes.
         case .loadingModel(nil): ("arrow.down.circle", "Loading model… (first launch can take several minutes)", nil)
-        case .idle: ("mic", "Ready. Hold \(DictationShortcutSettings.shortcut.name) to dictate.", nil)
+        case .idle: ("mic", "Ready. Hold \(DictationShortcutSettings.shortcut?.name ?? "your dictation key") to dictate.", nil)
         case .recording: ("mic.fill", "Recording…", .systemRed)
         case .transcribing: ("waveform", "Transcribing…", nil)
         case .error(let message): ("exclamationmark.triangle", message, nil)

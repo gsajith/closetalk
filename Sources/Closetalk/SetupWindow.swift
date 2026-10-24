@@ -12,6 +12,7 @@ final class SetupModel {
     // Starts from what's on disk, so a model that's already downloaded never shows as downloading.
     private(set) var progress = SetupProgress(
         microphoneAllowed: false, accessibilityAllowed: false,
+        shortcutChosen: DictationShortcutSettings.shortcut != nil,
         model: Transcriber.isDownloaded
             ? .compiling(startedAt: Date(), firstTime: !Transcriber.hasCompiledBefore)
             : .downloading(fraction: 0),
@@ -32,6 +33,15 @@ final class SetupModel {
     /// when it opens.
     private var isWindowOpen = false
     private var askedForAccessibility = false
+    /// Set by DictationController. Starting returns false when the event tap isn't running yet.
+    var startRecordingShortcut: ((@escaping (ShortcutRecorder.Step) -> Void) -> Bool)?
+    var stopRecordingShortcut: (() -> Void)?
+    /// The shortcut step is listening for keys.
+    private(set) var recordingShortcut = false
+    /// The modifiers held right now while recording, like "right ⌥".
+    private(set) var heldKeys = ""
+    /// The last key pressed while recording would have stopped typing, so it wasn't saved.
+    private(set) var shortcutRefused = false
     /// The practice field on the Try it step. Any dictation landing there finishes setup.
     var practiceText = "" {
         didSet { update { $0.triedIt = !practiceText.isEmpty } }
@@ -41,19 +51,21 @@ final class SetupModel {
     private(set) var microphoneDenied = MicrophonePermission.isDenied
 
     /// True on a first launch, or whenever a permission has gone missing since. Call
-    /// refreshPermissions() first.
+    /// refreshStatus() first.
     var needsSetup: Bool {
-        !progress.microphoneAllowed || !progress.accessibilityAllowed || !Transcriber.hasCompiledBefore
+        !progress.microphoneAllowed || !progress.accessibilityAllowed || !progress.shortcutChosen
+            || !Transcriber.hasCompiledBefore
     }
 
     func setSpeechModel(_ model: ModelSetup) {
         update { $0.model = model }
     }
 
-    func refreshPermissions() {
+    func refreshStatus() {
         update {
             $0.microphoneAllowed = MicrophonePermission.isAllowed
             $0.accessibilityAllowed = AXIsProcessTrusted()
+            $0.shortcutChosen = DictationShortcutSettings.shortcut != nil
         }
         let denied = MicrophonePermission.isDenied
         if denied != microphoneDenied { microphoneDenied = denied }
@@ -72,6 +84,7 @@ final class SetupModel {
         isWindowOpen = false
         unchecked = []
         waiting = []
+        cancelRecordingShortcut()
     }
 
     /// Shows the macOS prompt the first time. After a denial macOS won't prompt again, so this opens
@@ -81,7 +94,7 @@ final class SetupModel {
         if MicrophonePermission.canPrompt {
             AVCaptureDevice.requestAccess(for: .audio) { _ in
                 DispatchQueue.main.async {
-                    self.refreshPermissions()
+                    self.refreshStatus()
                     // Don't Allow ends the wait right away.
                     if !self.progress.microphoneAllowed { self.waiting.remove(.microphone) }
                 }
@@ -93,8 +106,31 @@ final class SetupModel {
 
     /// Coming back to Closetalk without granting the permission ends the wait, so the button works again.
     func appBecameActive() {
-        refreshPermissions()
+        refreshStatus()
         waiting = waiting.filter(progress.isDone)
+    }
+
+    /// Listens for the next key or combo pressed anywhere. Saving it is DictationController's job; this
+    /// only follows along for the shortcut step.
+    func recordShortcut() {
+        heldKeys = ""
+        shortcutRefused = false
+        recordingShortcut = startRecordingShortcut? { [weak self] step in
+            guard let self else { return }
+            switch step {
+            case .recording(let held):
+                heldKeys = held
+                shortcutRefused = false
+            case .refused: shortcutRefused = true
+            case .cancelled, .done: recordingShortcut = false
+            }
+        } ?? false
+    }
+
+    func cancelRecordingShortcut() {
+        guard recordingShortcut else { return }
+        recordingShortcut = false
+        stopRecordingShortcut?()
     }
 
     /// The first click shows the macOS prompt, which adds Closetalk to the Accessibility list and has
@@ -126,6 +162,7 @@ final class SetupModel {
     /// Slides to `step`, forward or back depending on where it sits in the list.
     func go(to step: SetupStep) {
         guard step != selected else { return }
+        cancelRecordingShortcut()
         movingForward = step.rawValue > selected.rawValue
         // The leaving pane picks its slide direction up from movingForward when it redraws, so change
         // the step on the next pass, after that redraw.
@@ -143,7 +180,7 @@ final class SetupModel {
         guard next != progress else { return }
         progress = next
         guard isWindowOpen else { return }
-        for step in [SetupStep.microphone, .accessibility, .model] where !before.isDone(step) && progress.isDone(step) {
+        for step in [SetupStep.microphone, .accessibility, .shortcut, .model] where !before.isDone(step) && progress.isDone(step) {
             checkOff(step)
         }
     }
@@ -153,7 +190,7 @@ final class SetupModel {
     private func checkOff(_ step: SetupStep) {
         unchecked.insert(step)
         Task { @MainActor in
-            if step != .model {
+            if step == .microphone || step == .accessibility {
                 // Gives a closing system prompt a moment, so it can't cover the window again.
                 try? await Task.sleep(for: .milliseconds(400))
                 bringToFront?()
@@ -201,7 +238,7 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
     }
 
     func show() {
-        model.refreshPermissions()
+        model.refreshStatus()
         if window == nil { model.selected = model.progress.firstUnfinished ?? .tryIt }
         model.selectStartingStep()
         let window = self.window ?? makeWindow()
@@ -209,7 +246,7 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
         NSApp.setActivationPolicy(.regular)
         poll?.invalidate()
         poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.model.refreshPermissions() }
+            MainActor.assumeIsolated { self?.model.refreshStatus() }
         }
         model.windowOpened()
         bringToFront()

@@ -69,13 +69,12 @@ p { margin: 0; }
 .callout h2 { font-size: clamp(17px, 1.9cqw, 23px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; transition: color 160ms ease-out; }
 .callout p { margin-top: 6px; font-size: clamp(14px, 1.4cqw, 16.5px); line-height: 1.45; color: var(--purple-2); }
 
-/* A callout lights up its line in pink ink on hover, and "Hold right ⌘" lights up while you hold the key. */
+/* A callout lights up its line in pink ink on hover. */
 .diagram:has(.callout[data-id="local"]:hover) .leader[data-for="local"],
 .diagram:has(.callout[data-id="words"]:hover) .leader[data-for="words"],
 .diagram:has(.callout[data-id="key"]:hover) .leader[data-for="key"],
-.diagram:has(.callout[data-id="free"]:hover) .leader[data-for="free"],
-.diagram[data-holding] .leader[data-for="key"] { --hot: 1; }
-.callout:hover h2, .diagram[data-holding] .callout[data-id="key"] h2 { color: var(--pink); }
+.diagram:has(.callout[data-id="free"]:hover) .leader[data-for="free"] { --hot: 1; }
+.callout:hover h2 { color: var(--pink); }
 
 /* The mic's stand ends at the stage's bottom edge, centered 1.02% right of the stage's middle.
    The Download plate butts against it there, as the mic's base. */

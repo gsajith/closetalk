@@ -11,21 +11,22 @@ private let fn: UInt64 = 0x80_0000
 private let space: Int64 = 49
 private let f5: Int64 = 96
 private let keyD: Int64 = 2
+private let rightCommandAlone = DictationShortcut.modifiers([.rightCommand])
 
 final class ShortcutMatcherTests: XCTestCase {
     func testRightCommandAloneStartsAndStops() {
-        var m = ShortcutMatcher(shortcut: .default)
+        var m = ShortcutMatcher(shortcut: rightCommandAlone)
         XCTAssertEqual(m.handle(.flagsChanged(flags: rightCmd), at: 1), .init(event: .keyDown(1)))
         XCTAssertEqual(m.handle(.flagsChanged(flags: 0), at: 2), .init(event: .keyUp(2)))
     }
 
     func testLeftCommandDoesNotTriggerRightCommand() {
-        var m = ShortcutMatcher(shortcut: .default)
+        var m = ShortcutMatcher(shortcut: rightCommandAlone)
         XCTAssertEqual(m.handle(.flagsChanged(flags: leftCmd), at: 1), .init())
     }
 
     func testAddingAModifierWhileHeldCountsAsOtherInput() {
-        var m = ShortcutMatcher(shortcut: .default)
+        var m = ShortcutMatcher(shortcut: rightCommandAlone)
         _ = m.handle(.flagsChanged(flags: rightCmd), at: 1)
         XCTAssertEqual(m.handle(.flagsChanged(flags: rightCmd | leftShift), at: 2), .init(event: .otherInput))
     }
@@ -38,7 +39,7 @@ final class ShortcutMatcherTests: XCTestCase {
     }
 
     func testTypingIsOtherInputAndPassesThrough() {
-        var m = ShortcutMatcher(shortcut: .default)
+        var m = ShortcutMatcher(shortcut: rightCommandAlone)
         XCTAssertEqual(m.handle(.keyDown(code: keyD, flags: 0, isRepeat: false), at: 1), .init(event: .otherInput))
     }
 
@@ -129,17 +130,17 @@ final class ShortcutRecorderTests: XCTestCase {
 
 final class DictationShortcutTests: XCTestCase {
     func testNames() {
-        XCTAssertEqual(DictationShortcut.default.name, "right ⌘")
+        XCTAssertEqual(rightCommandAlone.name, "right ⌘")
         XCTAssertEqual(DictationShortcut.modifiers([.fn]).name, "fn")
         XCTAssertEqual(DictationShortcut.key(code: space, label: "Space", modifiers: [.rightCommand, .leftControl]).name,
                        "⌃⌘Space")
         XCTAssertEqual(DictationShortcut.key(code: f5, label: "F5", modifiers: []).name, "F5")
     }
 
-    func testStorageRoundTripsAndFallsBackToTheDefault() {
+    func testStorageRoundTripsAndHasNoDefault() {
         let combo = DictationShortcut.key(code: space, label: "Space", modifiers: [.leftControl])
         XCTAssertEqual(DictationShortcut(storageData: combo.storageData), combo)
-        XCTAssertEqual(DictationShortcut(storageData: nil), .default)
-        XCTAssertEqual(DictationShortcut(storageData: Data("junk".utf8)), .default)
+        XCTAssertNil(DictationShortcut(storageData: nil))
+        XCTAssertNil(DictationShortcut(storageData: Data("junk".utf8)))
     }
 }

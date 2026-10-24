@@ -19,7 +19,7 @@ THESIS: The Riso mic printed as a labeled product diagram: every leader line poi
 
 OWN-WORLD: Uncoated paper ground with fiber grain. Two inks only, fluorescent pink #ed269d and blue #1c81c3, overprinting to purple #4a147d for text. Bricolage Grotesque for display and body. Thin blue leader lines with round pins, halftone mic art printed with multiply, wordmark printed twice off-register.
 
-STORY: The visitor reads the headline, follows the four callouts around the mic (runs on your Mac, hold right ⌘, your exact words, free with no account), downloads from the mic's base, then scrolls to the free-because-local argument, the demo and the questions.
+STORY: The visitor reads the headline, follows the four callouts around the mic (runs on your Mac, hold your shortcut, your exact words, free with no account), downloads from the mic's base, then scrolls to the free-because-local argument, the demo and the questions.
 
 FIRST VIEWPORT: Headline across the top. The mic large and centered, four callouts at its sides joined by leader lines to pins on the mic. Download for Mac plus requirements printed on the mic's base, centered under it.
 

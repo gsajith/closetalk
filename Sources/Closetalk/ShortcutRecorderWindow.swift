@@ -4,12 +4,12 @@ import AppKit
 /// (see HotkeyMonitor.record), so this window only shows what's happening.
 @MainActor
 final class ShortcutRecorderWindow: NSObject, NSWindowDelegate {
-    private static let hint = "Modifier keys like right ⌘ or fn work on their own. Other keys need ⌃, ⌥ or ⌘. Esc cancels."
+    private static let hint = "Esc cancels."
 
     private let panel = NSPanel(
         contentRect: NSRect(x: 0, y: 0, width: 380, height: 170),
         styleMask: [.titled, .closable], backing: .buffered, defer: false)
-    private let instruction = NSTextField(labelWithString: "Press the shortcut you want to hold to dictate.")
+    private let instruction = NSTextField(labelWithString: "Press your new dictation key.")
     private let shortcutLabel = NSTextField(labelWithString: "")
     private let hintLabel = NSTextField(wrappingLabelWithString: hint)
     private let onClose: () -> Void
@@ -18,7 +18,7 @@ final class ShortcutRecorderWindow: NSObject, NSWindowDelegate {
     init(current: String, onClose: @escaping () -> Void) {
         self.onClose = onClose
         super.init()
-        panel.title = "Dictation shortcut"
+        panel.title = "Dictation key"
         panel.isReleasedWhenClosed = false
         panel.level = .floating
         panel.delegate = self
@@ -53,7 +53,7 @@ final class ShortcutRecorderWindow: NSObject, NSWindowDelegate {
 
     func showRefused() {
         hintLabel.textColor = .systemRed
-        hintLabel.stringValue = "That key needs ⌃, ⌥ or ⌘ with it, or it would stop typing."
+        hintLabel.stringValue = "Add ⌃, ⌥ or ⌘ so that key still types."
     }
 
     /// Shows the saved shortcut for a moment, then closes.

@@ -39,7 +39,9 @@ final class DictationController {
     init(menuBar: MenuBarController, setup: SetupModel) {
         self.menuBar = menuBar
         self.setup = setup
-        menuBar.onChangeShortcut = { [weak self] in self?.recordShortcut() }
+        menuBar.onChangeShortcut = { [weak self] in self?.openShortcutWindow() }
+        setup.startRecordingShortcut = { [weak self] onStep in self?.recordShortcut(onStep: onStep) ?? false }
+        setup.stopRecordingShortcut = { [weak self] in self?.stopRecordingShortcut() }
     }
 
     /// Permissions are requested from the setup window, not here.
@@ -110,36 +112,56 @@ final class DictationController {
         refreshMenu()
     }
 
-    /// Opens the recorder window. The event tap stops dictating and records keys until it closes.
-    private func recordShortcut() {
-        guard let monitor else { return refreshMenu() }
+    /// Records a new shortcut through the event tap, which stops dictating meanwhile, and saves it when one
+    /// comes through. `onStep` sees every step after that. Returns false when the tap isn't running yet,
+    /// which means Accessibility isn't on.
+    func recordShortcut(onStep: @escaping (ShortcutRecorder.Step) -> Void) -> Bool {
+        guard let monitor else { return false }
+        monitor.record { [weak self] step in
+            MainActor.assumeIsolated {
+                if case .done(let shortcut) = step { self?.save(shortcut) }
+                onStep(step)
+            }
+        }
+        return true
+    }
+
+    /// Ends a recording that's still going, back to listening for the saved shortcut.
+    func stopRecordingShortcut() {
+        monitor?.listen(for: DictationShortcutSettings.shortcut)
+    }
+
+    private func save(_ shortcut: DictationShortcut) {
+        DictationShortcutSettings.shortcut = shortcut
+        monitor?.listen(for: shortcut)
+        setup.refreshStatus()
+        refreshMenu()
+    }
+
+    /// Change shortcut… in the menu records in a small window of its own.
+    private func openShortcutWindow() {
         if let shortcutWindow { return shortcutWindow.show() }
-        let window = ShortcutRecorderWindow(current: DictationShortcutSettings.shortcut.name) { [weak self] in
+        let window = ShortcutRecorderWindow(current: DictationShortcutSettings.shortcut?.name ?? "") { [weak self] in
             // Closed without saving, or closed after saving: either way go back to the saved shortcut.
             guard let self, shortcutWindow != nil else { return }
             shortcutWindow = nil
-            monitor.listen(for: DictationShortcutSettings.shortcut)
+            stopRecordingShortcut()
         }
+        guard recordShortcut(onStep: { [weak self] step in self?.showInWindow(step) }) else { return refreshMenu() }
         shortcutWindow = window
         window.show()
-        monitor.record { [weak self] step in
-            MainActor.assumeIsolated { self?.handleRecorder(step) }
-        }
     }
 
-    private func handleRecorder(_ step: ShortcutRecorder.Step) {
+    private func showInWindow(_ step: ShortcutRecorder.Step) {
         switch step {
         case .recording(let held): shortcutWindow?.showHeld(held)
         case .refused: shortcutWindow?.showRefused()
         case .cancelled: shortcutWindow?.close()
         case .done(let shortcut):
-            DictationShortcutSettings.shortcut = shortcut
-            monitor?.listen(for: shortcut)
             let window = shortcutWindow
             // Cleared first so closing the window doesn't reset the listener mid-hold.
             shortcutWindow = nil
             window?.showSaved(shortcut.name)
-            refreshMenu()
         }
     }
 
@@ -228,6 +250,7 @@ final class DictationController {
 
     private var state: AppState {
         if monitor == nil { return .error("Needs Accessibility permission") }
+        if DictationShortcutSettings.shortcut == nil { return .error("Choose a dictation key in Setup…") }
         // Checked fresh each time, so turning the mic on in System Settings clears it without a relaunch.
         if MicrophonePermission.isDenied {
             return .error("Needs Microphone permission")

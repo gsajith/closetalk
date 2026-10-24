@@ -8,7 +8,7 @@ Every factual claim on the site, in the README or in app copy (timings, sizes, p
 
 ## Copy names the user's shortcut
 
-The dictation shortcut is configurable. App copy that tells people what to press uses `DictationShortcutSettings.shortcut.name`, never a hardcoded "right ⌘". Docs and the site may say "right ⌘" as the default.
+The dictation shortcut is chosen in setup, and there's no default. User-facing copy calls it the dictation key, explains it before asking for it, and names the saved one with `DictationShortcutSettings.shortcut?.name`. Nothing in the app, docs or site presents right ⌘ as the default. It may appear as one example among others.
 
 ## Copies of one fact change together
 

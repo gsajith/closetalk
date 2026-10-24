@@ -20,7 +20,7 @@ Hardware floor: Apple Silicon (M1 or later), macOS 14 or later, about 3 GB free 
 
 ## Product Purpose
 
-Closetalk is push-to-talk dictation. Hold the right Command key, talk, let go, and the text appears wherever the cursor is, about a second later. It exists as a free stand-in for paid dictation apps, built mostly for talking to coding agents. Success is a user who stops reaching for the keyboard to write prompts.
+Closetalk is push-to-talk dictation. Hold a key, talk, let go, and the text appears wherever the cursor is, about a second later. It exists as a free stand-in for paid dictation apps, built mostly for talking to coding agents. Success is a user who stops reaching for the keyboard to write prompts.
 
 ## Positioning
 
@@ -30,12 +30,12 @@ Named competitors: Superwhisper and Wispr Flow.
 
 Supporting differences, in order:
 1. Keeps your exact words. Only "um" and "uh" are removed. No AI rewrite, so `foo()` and `args[0]` survive.
-2. One key, nothing else. No window, no mode switch. Right Command shortcuts (right ⌘C, ⌘Tab) still work, and a quick tap does nothing.
+2. One key, nothing else. No window, no mode switch. People choose the key or combo in setup, other shortcuts that use that key still work, and a quick tap does nothing.
 
 ## Operating Context
 
 - Lives in the menu bar only. No Dock icon, no main window.
-- Interaction: hold right Command, hear a start chime, talk, release, hear a stop chime, text is pasted at the cursor. The clipboard is restored two seconds later, and password-manager copies are never put on it.
+- Interaction: hold the shortcut chosen in setup, hear a start chime, talk, release, hear a stop chime, text is pasted at the cursor. The clipboard is restored two seconds later, and password-manager copies are never put on it.
 - Consecutive dictations land with a space between them. Typing or clicking elsewhere resets that.
 - Menu bar states: downloading or loading the model, ready, recording, transcribing, needs attention. The menu holds a status line, the microphone picker, launch at login, Check for Updates, and quit.
 - First launch: grant microphone and Accessibility permissions, then wait for a 1.5 GB model download and a one-time Neural Engine compile (about 11 minutes on an M1 Max).
