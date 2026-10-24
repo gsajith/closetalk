@@ -23,13 +23,8 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 
 1. Download [Closetalk.dmg](https://github.com/gsajith/closetalk/releases/latest/download/Closetalk.dmg), open it, and drag Closetalk into the Applications folder next to it.
 2. Open Closetalk from Applications.
-3. macOS will refuse to open it the first time, because I haven't paid Apple to notarize it. Open System Settings > Privacy & Security, scroll down, and click Open Anyway next to the Closetalk message. Then open the app again.
 
-If you'd rather use Terminal, this does the same thing as step 3:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/Closetalk.app
-```
+Closetalk keeps itself up to date. It checks for a new version once a day, and Check for Updates in the menu bar menu checks right away.
 
 ### Build it yourself
 
@@ -60,7 +55,7 @@ The menu bar icon shows where things stand:
 | Waveform | Transcribing |
 | Warning triangle | Needs attention. Open the menu to see why. |
 
-The menu also has the microphone picker and a launch at login toggle.
+The menu also has the microphone picker, a launch at login toggle and Check for Updates.
 
 ## Troubleshooting
 
@@ -74,7 +69,7 @@ The menu also has the microphone picker and a launch at login toggle.
 
 ## Privacy
 
-Closetalk goes online for one thing: downloading the model and its tokenizer from Hugging Face on first launch. Audio, transcripts and clipboard contents stay on your Mac. Audio is held in memory only while you're dictating and is never written to disk.
+Closetalk goes online for two things: downloading the model and its tokenizer from Hugging Face on first launch, and checking closetalk.dev for updates once a day. The update check downloads a small feed file and sends nothing about you or what you dictate. Audio, transcripts and clipboard contents stay on your Mac. Audio is held in memory only while you're dictating and is never written to disk.
 
 ## For developers
 
@@ -91,7 +86,7 @@ The log shows how long each mic took to go live and how long each transcription 
 
 ### Notarized builds
 
-Release builds are signed with a Developer ID certificate and notarized by Apple, so they open without the Open Anyway step. You need an Apple Developer Program membership. Save your notarization login once:
+Release builds are signed with a Developer ID certificate and notarized by Apple, so macOS opens them without a warning. You need an Apple Developer Program membership. Save your notarization login once:
 
 ```sh
 xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
@@ -112,7 +107,7 @@ scripts/package.sh
 scripts/notarize.sh build/Closetalk.dmg
 ```
 
-Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, and merge the feed changes it lists through a PR. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
+Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, then merge the feed change through a PR. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
 
 Self-signed builds turn off hardened runtime's library validation, because macOS only loads Sparkle.framework from the same Apple Team ID and a self-signed certificate has none. Developer ID builds keep it on.
 
@@ -120,14 +115,9 @@ Self-signed builds turn off hardened runtime's library validation, because macOS
 
 Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](https://sparkle-project.org), and from Check for Updates in the menu. Sparkle installs an update only when it's signed with the private key in the login keychain, which matches `SUPublicEDKey` in `Resources/Info.plist`.
 
-For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. `scripts/release.sh` adds the release zip to the appcast like this:
+For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string.
 
-```sh
-cp build/Closetalk.zip site/public/Closetalk-<version>.zip
-.build/artifacts/sparkle/Sparkle/bin/generate_appcast site/public
-```
-
-`generate_appcast` signs the zip with the key from the keychain, makes `.delta` files for small upgrades from earlier versions, and writes `site/public/appcast.xml`. Its download links point next to the feed, at `https://closetalk.dev/<file>`. Commit the new appcast, zip and `.delta` files, and the site deploy serves them from the root of closetalk.dev. `generate_appcast` moves archives that drop out of the feed to `site/public/old_updates`, which is gitignored.
+The feed, `site/public/appcast.xml`, deploys with the site. Each entry downloads `Closetalk.zip` from its GitHub release, so the repo never stores app builds. `scripts/release.sh` runs Sparkle's `generate_appcast`, which signs the new zip with the key from the keychain and adds an entry for it. Publish the GitHub release before the feed change goes live, or Sparkle will offer an update it can't download.
 
 ## License
 
