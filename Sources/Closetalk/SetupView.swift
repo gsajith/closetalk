@@ -238,18 +238,21 @@ private struct PermissionButton: View {
     }
 
     var body: some View {
-        Button(action: action) {
-            switch state {
-            case .ready: Text(title)
-            case .waiting: Text("Waiting…")
-            case .done: Label(doneTitle, systemImage: "checkmark").symbolEffect(.bounce, value: state)
-            }
+        if state == .done {
+            // Drawn rather than a tinted button: macOS greys out prominent buttons in a window that
+            // isn't active, and the window often isn't when it comes back from System Settings.
+            Label(doneTitle, systemImage: "checkmark")
+                .symbolEffect(.bounce, value: state)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .background(Color.green, in: .rect(cornerRadius: 6))
+                .transition(.scale(scale: 0.85).combined(with: .opacity))
+        } else {
+            Button(state == .waiting ? "Waiting…" : title, action: action)
+                .buttonStyle(.borderedProminent)
+                .disabled(state == .waiting)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(state == .done ? .green : nil)
-        .disabled(state == .waiting)
-        // Done stays green rather than greyed out, but there's nothing left to click.
-        .allowsHitTesting(state == .ready)
     }
 }
 
