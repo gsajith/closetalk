@@ -34,6 +34,7 @@ if [[ "$IDENTITY" == "Developer ID Application"* ]]; then
   fi
 fi
 
+# The volume is named Closetalk.dmg so the mounted disk on the desktop doesn't read as the app itself.
 # The background ships at 2x (assets/dmg-background.png). Finder wants a TIFF holding both sizes.
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
@@ -42,7 +43,7 @@ tiffutil -cathidpicheck "$TMP/background.png" assets/dmg-background.png -out "$T
 
 rm -f "$DMG"
 uvx --quiet dmgbuild@1.6.7 -s scripts/dmg-settings.py -D app="$APP" -D background="$TMP/background.tiff" \
-  -D icon="$APP/Contents/Resources/AppIcon.icns" Closetalk "$DMG" 2>&1 | grep -v "is deprecated" || true
+  -D icon="$APP/Contents/Resources/AppIcon.icns" Closetalk.dmg "$DMG" 2>&1 | grep -v "is deprecated" || true
 [ -f "$DMG" ] || { echo "dmgbuild didn't create $DMG." >&2; exit 1; }
 codesign --force --sign "$IDENTITY" $TIMESTAMP "$DMG"
 
