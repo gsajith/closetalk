@@ -17,9 +17,17 @@ final class SetupModel {
             : .downloading(fraction: 0),
         triedIt: false)
     var selected: SetupStep = .microphone
-    /// Called when a permission comes through. Granting one hands focus to a system prompt or to
-    /// System Settings, so the window uses this to come back to the front.
-    var onPermissionGranted: (() -> Void)?
+    /// Which way the last step change went, so the panes slide the right way.
+    private(set) var movingForward = true
+    /// Steps that just got done but haven't played their check yet. They show as not done until the
+    /// window is back in front, so the person sees the check happen.
+    private(set) var unchecked: Set<SetupStep> = []
+    /// Granting a permission hands focus to a system prompt or to System Settings, so the window uses
+    /// this to come back to the front before playing the check.
+    var bringToFront: (() -> Void)?
+    /// Check-offs only play for changes that happen while the window is open, not for the catch-up
+    /// when it opens.
+    private var isWindowOpen = false
     private var askedForAccessibility = false
     /// The practice field on the Try it step. Any dictation landing there finishes setup.
     var practiceText = "" {
@@ -41,14 +49,24 @@ final class SetupModel {
     }
 
     func refreshPermissions() {
-        let before = progress
         update {
             $0.microphoneAllowed = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
             $0.accessibilityAllowed = AXIsProcessTrusted()
         }
-        let granted = (!before.microphoneAllowed && progress.microphoneAllowed)
-            || (!before.accessibilityAllowed && progress.accessibilityAllowed)
-        if granted { onPermissionGranted?() }
+    }
+
+    /// The window shows a step as done once its check has played.
+    func showsDone(_ step: SetupStep) -> Bool {
+        progress.isDone(step) && !unchecked.contains(step)
+    }
+
+    func windowOpened() {
+        isWindowOpen = true
+    }
+
+    func windowClosed() {
+        isWindowOpen = false
+        unchecked = []
     }
 
     /// Shows the macOS prompt the first time. After a denial macOS won't prompt again, so this opens
@@ -81,23 +99,53 @@ final class SetupModel {
     }
 
     func goToNext() {
-        if let next = progress.nextUnfinished(after: selected) { selected = next }
+        if let next = progress.nextUnfinished(after: selected) { go(to: next) }
     }
 
     func goBack() {
-        if let previous = SetupStep(rawValue: selected.rawValue - 1) { selected = previous }
+        if let previous = SetupStep(rawValue: selected.rawValue - 1) { go(to: previous) }
     }
 
-    /// Applies a change, and moves on when it finishes the step on screen. Try it stays put so the
-    /// user can read what they dictated.
+    /// Slides to `step`, forward or back depending on where it sits in the list.
+    func go(to step: SetupStep) {
+        guard step != selected else { return }
+        movingForward = step.rawValue > selected.rawValue
+        // The leaving pane picks its slide direction up from movingForward when it redraws, so change
+        // the step on the next pass, after that redraw.
+        DispatchQueue.main.async {
+            withAnimation(.snappy(duration: 0.35)) { self.selected = step }
+        }
+    }
+
+    /// Applies a change, and plays the check for any step it finishes. Try it has no check: the person
+    /// stays there to read what they dictated.
     private func update(_ change: (inout SetupProgress) -> Void) {
-        let wasDone = progress.isDone(selected)
+        let before = progress
         var next = progress
         change(&next)
         guard next != progress else { return }
         progress = next
-        if !wasDone, progress.isDone(selected), selected != .tryIt, let step = progress.nextUnfinished(after: selected) {
-            selected = step
+        guard isWindowOpen else { return }
+        for step in [SetupStep.microphone, .accessibility, .model] where !before.isDone(step) && progress.isDone(step) {
+            checkOff(step)
+        }
+    }
+
+    /// Brings the window forward for a permission, plays the step's check, then slides on if that step
+    /// is the one on screen.
+    private func checkOff(_ step: SetupStep) {
+        unchecked.insert(step)
+        Task { @MainActor in
+            if step != .model {
+                // Gives a closing system prompt a moment, so it can't cover the window again.
+                try? await Task.sleep(for: .milliseconds(400))
+                bringToFront?()
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+            withAnimation(.spring(duration: 0.45, bounce: 0.4)) { _ = unchecked.remove(step) }
+            try? await Task.sleep(for: .seconds(1))
+            guard isWindowOpen, selected == step, let next = progress.nextUnfinished(after: step) else { return }
+            go(to: next)
         }
     }
 
@@ -118,13 +166,9 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
     override init() {
         super.init()
         Self.installMainMenu()
-        model.onPermissionGranted = { [weak self] in
-            // Mostly for Accessibility, which is granted in System Settings: bring the window back
-            // once it ticks. Waits a moment so a closing system prompt can't cover it again.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                guard let self, self.window?.isVisible == true, !NSApp.isActive else { return }
-                self.bringToFront()
-            }
+        model.bringToFront = { [weak self] in
+            guard let self, self.window?.isVisible == true else { return }
+            self.bringToFront()
         }
     }
 
@@ -139,6 +183,7 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
         poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.model.refreshPermissions() }
         }
+        model.windowOpened()
         bringToFront()
     }
 
@@ -177,6 +222,7 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
         poll?.invalidate()
         poll = nil
         model.practiceText = "" // Each visit starts with an empty practice field.
+        model.windowClosed()
         NSApp.setActivationPolicy(.accessory)
     }
 

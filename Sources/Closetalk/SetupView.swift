@@ -5,6 +5,7 @@ import SwiftUI
 struct SetupView: View {
     @Bindable var model: SetupModel
     let close: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The dictation shortcut as the menu names it: "right ⌘" by default.
     private var shortcut: String { DictationShortcutSettings.shortcut.name }
@@ -16,6 +17,9 @@ struct SetupView: View {
             VStack(alignment: .leading, spacing: 0) {
                 pane
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .id(model.selected)
+                    .transition(paneTransition)
+                    .clipped()
                 footer
             }
             .padding(24)
@@ -28,7 +32,7 @@ struct SetupView: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 2) {
             ForEach(SetupStep.allCases, id: \.self) { step in
-                Button { model.selected = step } label: {
+                Button { model.go(to: step) } label: {
                     HStack(spacing: 8) {
                         status(step).frame(width: 16, height: 16)
                         Text(step.title)
@@ -52,16 +56,28 @@ struct SetupView: View {
     }
 
     @ViewBuilder private func status(_ step: SetupStep) -> some View {
-        if model.progress.isDone(step) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                .background(Circle().fill(.white).padding(2))
-        } else if step == .model, case .failed = model.progress.model {
+        let done = model.showsDone(step)
+        if !done, step == .model, case .failed = model.progress.model {
             Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
-        } else if step == .model {
+        } else if !done, step == .model {
             ProgressView().controlSize(.mini)
         } else {
-            Image(systemName: "circle").foregroundStyle(model.selected == step ? Color.white : .secondary)
+            // One image for both states, so the circle morphs into the check and bounces.
+            Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(done ? Color.green : model.selected == step ? Color.white : .secondary)
+                .background { if done { Circle().fill(.white).padding(2) } }
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.bounce, value: done)
         }
+    }
+
+    /// Forward slides in from the right, back from the left. Reduce Motion cross-fades instead.
+    private var paneTransition: AnyTransition {
+        if reduceMotion { return .opacity }
+        let forward = model.movingForward
+        return .asymmetric(
+            insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+            removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity))
     }
 
     // MARK: Steps
@@ -78,7 +94,7 @@ struct SetupView: View {
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
                  text: "Closetalk listens only while you hold \(shortcut). Audio stays on this Mac and is never saved.") {
-            if model.progress.microphoneAllowed {
+            if model.showsDone(.microphone) {
                 Done("Microphone is on.")
             } else if model.microphoneDenied {
                 Button("Open System Settings", action: model.allowMicrophone).buttonStyle(.borderedProminent)
@@ -92,7 +108,7 @@ struct SetupView: View {
     private var accessibility: some View {
         StepPane(title: "Let Closetalk use \(shortcut)",
                  text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold \(shortcut), and to paste what you said. Turn on Closetalk in the list.") {
-            if model.progress.accessibilityAllowed {
+            if model.showsDone(.accessibility) {
                 Done("Accessibility is on.")
             } else {
                 Button("Open System Settings", action: model.openAccessibilitySettings).buttonStyle(.borderedProminent)
@@ -136,7 +152,7 @@ struct SetupView: View {
             }
         case .ready:
             StepPane(title: "The speech model is ready", text: "It runs on this Mac, and it's yours to keep.") {
-                Done("Ready.")
+                if model.showsDone(.model) { Done("Ready.") }
             }
         }
     }
@@ -196,7 +212,10 @@ private struct Note: View {
 private struct Done: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View { Label(text, systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
+    var body: some View {
+        Label(text, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            .transition(.scale(scale: 0.6, anchor: .leading).combined(with: .opacity))
+    }
 }
 
 /// Focused on appear, so a dictation pastes straight into it.
