@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updater = Updater()
         setup = SetupWindowController()
         menuBar = MenuBarController(updatesItem: updater.menuItem, openSetup: { [weak self] in self?.setup.show() })
+        menuBar.onChangeShortcut = { [weak self] in self?.setup.show(at: .shortcut) }
         dictation = DictationController(menuBar: menuBar, setup: setup.model)
         dictation.start()
         // The window asks for both permissions and explains the one-time model compile, so it opens

@@ -122,27 +122,28 @@ struct SetupView: View {
     private var shortcutStep: some View {
         StepPane(title: "Choose a key to hold while you talk",
                  text: "Pick one you don't type with, like fn or right ⌘.") {
-            if model.recordingShortcut {
-                // The event tap does the listening, so this only shows what it hears.
-                Text(model.heldKeys.isEmpty ? "Press a key…" : model.heldKeys)
-                    .font(.title3.weight(.semibold))
-                    .frame(minWidth: 220, minHeight: 36)
-                    .background(.background, in: .rect(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor))
-                if model.shortcutRefused {
-                    Text("Add ⌃, ⌥ or ⌘ so that key still types.")
-                        .font(.callout).foregroundStyle(.red)
+            HStack(spacing: 10) {
+                KeyField(text: keyFieldText, isListening: model.recordingShortcut)
+                if model.recordingShortcut {
+                    Button("Cancel", action: model.cancelRecordingShortcut)
+                } else if model.progress.shortcutChosen {
+                    Button("Change", action: model.recordShortcut)
                 } else {
-                    Note("Esc cancels.")
+                    Button("Choose Key", action: model.recordShortcut).buttonStyle(.borderedProminent)
                 }
-                Button("Cancel", action: model.cancelRecordingShortcut)
-            } else if model.showsDone(.shortcut) {
+            }
+            if model.recordingShortcut && model.shortcutRefused {
+                Text("Add ⌃, ⌥ or ⌘ so that key still types.").font(.callout).foregroundStyle(.red)
+            } else if !model.recordingShortcut && model.showsDone(.shortcut) {
                 Done("Hold \(shortcut) to talk.")
-                Button("Change", action: model.recordShortcut)
-            } else {
-                Button("Choose Key", action: model.recordShortcut).buttonStyle(.borderedProminent)
             }
         }
+    }
+
+    /// While listening, the field empties so the old key is visibly gone; Cancel brings it back.
+    private var keyFieldText: String {
+        if model.recordingShortcut { return model.heldKeys.isEmpty ? "Press a key…" : model.heldKeys }
+        return DictationShortcutSettings.shortcut?.name ?? "None"
     }
 
     @ViewBuilder private var speechModel: some View {
@@ -280,6 +281,24 @@ private struct PermissionButton: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(state == .waiting)
         }
+    }
+}
+
+/// The dictation key, shown like a key cap. The event tap does the listening, so this only shows
+/// what it hears.
+private struct KeyField: View {
+    let text: String
+    let isListening: Bool
+
+    var body: some View {
+        Text(text)
+            .font(.title3.weight(.semibold))
+            .foregroundStyle(isListening ? .secondary : .primary)
+            .frame(minWidth: 160, minHeight: 32)
+            .padding(.horizontal, 10)
+            .background(.background, in: .rect(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6)
+                .strokeBorder(isListening ? Color.accentColor : .secondary.opacity(0.4), lineWidth: isListening ? 2 : 1))
     }
 }
 

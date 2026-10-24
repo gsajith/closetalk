@@ -237,10 +237,16 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
         }
     }
 
-    func show() {
+    /// Opens on `step` when given and available, like the dictation key from the menu. Otherwise on the
+    /// first thing left to do.
+    func show(at step: SetupStep? = nil) {
         model.refreshStatus()
         if window == nil { model.selected = model.progress.firstUnfinished ?? .tryIt }
-        model.selectStartingStep()
+        if let step, model.progress.isAvailable(step) {
+            model.selected = step
+        } else {
+            model.selectStartingStep()
+        }
         let window = self.window ?? makeWindow()
         self.window = window
         NSApp.setActivationPolicy(.regular)
