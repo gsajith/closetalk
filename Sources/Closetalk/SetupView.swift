@@ -94,19 +94,19 @@ struct SetupView: View {
 
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
-                 text: "Closetalk only listens while you're dictating. Audio stays on this Mac and is never saved.") {
+                 text: "It only listens while you're dictating. Nothing leaves your Mac.") {
             PermissionButton(model.microphoneDenied ? "Open System Settings" : "Allow Microphone",
                              doneTitle: "Microphone is on", state: permissionState(.microphone),
                              action: model.allowMicrophone)
             if model.microphoneDenied && !model.progress.microphoneAllowed && !model.waiting.contains(.microphone) {
-                Note("You turned this off earlier. Switch on Closetalk in the Microphone list.")
+                Note("Turn on Closetalk in the Microphone list.")
             }
         }
     }
 
     private var accessibility: some View {
         StepPane(title: "Let Closetalk listen to your keypresses",
-                 text: "Closetalk needs to notice the key you hold to turn the microphone on and off. macOS calls this Accessibility. Turn on Closetalk in the list.") {
+                 text: "So it knows when to turn the mic on. Turn on Closetalk in the Accessibility list.") {
             PermissionButton("Open System Settings", doneTitle: "Accessibility is on",
                              state: permissionState(.accessibility), action: model.openAccessibilitySettings)
         }
@@ -120,27 +120,27 @@ struct SetupView: View {
     }
 
     private var shortcutStep: some View {
-        StepPane(title: "Pick a key to hold while you talk",
-                 text: "Hold it down, say what you want, and let go. Your words appear wherever you're typing. Choose a key you don't type with, like fn or right ⌘, or a combo like ⌃⌥Space.") {
+        StepPane(title: "Choose a key to hold while you talk",
+                 text: "Pick one you don't type with, like fn or right ⌘.") {
             if model.recordingShortcut {
                 // The event tap does the listening, so this only shows what it hears.
-                Text(model.heldKeys.isEmpty ? "Press it now…" : model.heldKeys)
+                Text(model.heldKeys.isEmpty ? "Press a key…" : model.heldKeys)
                     .font(.title3.weight(.semibold))
                     .frame(minWidth: 220, minHeight: 36)
                     .background(.background, in: .rect(cornerRadius: 6))
                     .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor))
                 if model.shortcutRefused {
-                    Text("That key needs ⌃, ⌥ or ⌘ with it, or it would stop typing.")
+                    Text("Add ⌃, ⌥ or ⌘ so that key still types.")
                         .font(.callout).foregroundStyle(.red)
                 } else {
-                    Note("Keys like fn or right ⌘ work on their own. Other keys need ⌃, ⌥ or ⌘ with them. Esc cancels.")
+                    Note("Esc cancels.")
                 }
                 Button("Cancel", action: model.cancelRecordingShortcut)
             } else if model.showsDone(.shortcut) {
                 Done("Hold \(shortcut) to talk.")
-                Button("Pick a Different Key", action: model.recordShortcut)
+                Button("Change", action: model.recordShortcut)
             } else {
-                Button("Pick a Key", action: model.recordShortcut).buttonStyle(.borderedProminent)
+                Button("Choose Key", action: model.recordShortcut).buttonStyle(.borderedProminent)
             }
         }
     }
@@ -149,14 +149,14 @@ struct SetupView: View {
         switch model.progress.model {
         case .downloading(let fraction):
             StepPane(title: "Downloading the speech model",
-                     text: "Closetalk runs Whisper on your Mac, so it downloads the model once: about 1.5 GB.") {
+                     text: "A one-time download, about 1.5 GB.") {
                 ProgressView(value: fraction)
-                Note("\(Int(fraction * 100))% downloaded")
-                Note("You can close this window. Closetalk keeps going in the menu bar.")
+                Note("\(Int(fraction * 100))% done")
+                Note("You can close this window. It keeps going.")
             }
         case .compiling(let startedAt, true):
             StepPane(title: "Getting the speech model ready",
-                     text: "Downloaded. Now your Mac is getting it ready. This happens once, and takes about 10 minutes.") {
+                     text: "This happens once and takes about 10 minutes.") {
                 // Core ML reports no progress here, so the bar follows elapsed time.
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let elapsed = context.date.timeIntervalSince(startedAt)
@@ -169,7 +169,7 @@ struct SetupView: View {
                         }
                     }
                 }
-                Note("You can close this window. Closetalk keeps going in the menu bar.")
+                Note("You can close this window. It keeps going.")
             }
         case .compiling(_, false):
             StepPane(title: "Loading the speech model", text: "This takes a few seconds.") {
@@ -177,10 +177,10 @@ struct SetupView: View {
             }
         case .failed(let message):
             StepPane(title: "The speech model didn't load", text: message) {
-                Note("Closetalk tries again every 30 seconds. Check your internet connection if it keeps failing.")
+                Note("Closetalk tries again every 30 seconds. If it keeps failing, check your internet.")
             }
         case .ready:
-            StepPane(title: "The speech model is ready", text: "It runs on this Mac, and it's yours to keep.") {
+            StepPane(title: "The speech model is ready", text: "It runs on your Mac, so it works offline.") {
                 if model.showsDone(.model) { Done("Ready.") }
             }
         }
@@ -190,7 +190,7 @@ struct SetupView: View {
         VStack(alignment: .leading, spacing: 12) {
             (Text("Hold ") + Text(shortcut).bold() + Text(" and talk"))
                 .font(.title2.weight(.semibold))
-            Text("Say anything, then let go. Your words land here, the same way they will in any app.")
+            Text("Say anything, then let go. It works the same in any app.")
                 .foregroundStyle(.secondary)
             PracticeField(text: $model.practiceText)
         }
