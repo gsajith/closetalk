@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dictation.start()
         // The window asks for both permissions and explains the one-time model compile, so it opens
         // on a first launch and whenever a permission has gone missing.
+        setup.model.refreshPermissions()
         if setup.model.needsSetup { setup.show() }
     }
 

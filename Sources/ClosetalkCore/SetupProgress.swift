@@ -47,19 +47,24 @@ public struct SetupProgress: Equatable, Sendable {
     }
 
     public var firstUnfinished: SetupStep? {
-        SetupStep.allCases.first { !isDone($0) && isAvailable($0) }
+        SetupStep.allCases.first(where: isOpen)
     }
 
     /// The next unfinished, available step after `step`, wrapping around. Nil when there's nowhere to go.
     public func nextUnfinished(after step: SetupStep) -> SetupStep? {
         let all = SetupStep.allCases
         let rest = all[(step.rawValue + 1)...] + all[..<step.rawValue]
-        return rest.first { !isDone($0) && isAvailable($0) }
+        return rest.first(where: isOpen)
+    }
+
+    /// Still to do, and not locked.
+    private func isOpen(_ step: SetupStep) -> Bool {
+        !isDone(step) && isAvailable(step)
     }
 }
 
 /// Core ML reports no progress while it compiles, so the window shows elapsed time against a
-/// typical duration instead (about 11 minutes on an M1 Max).
+/// typical duration instead. It took about 11 minutes on an M1 Max; the window says about 10.
 public enum CompileEstimate {
     public static let typical: TimeInterval = 600
 

@@ -9,8 +9,13 @@ import SwiftUI
 @MainActor
 @Observable
 final class SetupModel {
+    // Starts from what's on disk, so a model that's already downloaded never shows as downloading.
     private(set) var progress = SetupProgress(
-        microphoneAllowed: false, accessibilityAllowed: false, model: .downloading(fraction: 0), triedIt: false)
+        microphoneAllowed: false, accessibilityAllowed: false,
+        model: Transcriber.isDownloaded
+            ? .compiling(startedAt: Date(), firstTime: !Transcriber.hasCompiledBefore)
+            : .downloading(fraction: 0),
+        triedIt: false)
     var selected: SetupStep = .microphone
     /// Called when a permission comes through. Granting one hands focus to a system prompt or to
     /// System Settings, so the window uses this to come back to the front.
@@ -25,13 +30,13 @@ final class SetupModel {
         [.denied, .restricted].contains(AVCaptureDevice.authorizationStatus(for: .audio))
     }
 
-    /// True on a first launch, or whenever a permission has gone missing since.
+    /// True on a first launch, or whenever a permission has gone missing since. Call
+    /// refreshPermissions() first.
     var needsSetup: Bool {
-        refreshPermissions()
-        return !progress.microphoneAllowed || !progress.accessibilityAllowed || !Transcriber.hasCompiledBefore
+        !progress.microphoneAllowed || !progress.accessibilityAllowed || !Transcriber.hasCompiledBefore
     }
 
-    func setModel(_ model: ModelSetup) {
+    func setSpeechModel(_ model: ModelSetup) {
         update { $0.model = model }
     }
 
@@ -68,6 +73,11 @@ final class SetupModel {
             let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
             _ = AXIsProcessTrustedWithOptions(options)
         }
+    }
+
+    /// Opening the window lands on the first thing left to do, unless the step on screen still needs work.
+    func selectStartingStep() {
+        if progress.isDone(selected) { selected = progress.firstUnfinished ?? .tryIt }
     }
 
     func goToNext() {
@@ -120,9 +130,8 @@ final class SetupWindowController: NSObject, NSWindowDelegate {
 
     func show() {
         model.refreshPermissions()
-        if !model.progress.isDone(model.selected) || window == nil {
-            model.selected = model.progress.firstUnfinished ?? .tryIt
-        }
+        if window == nil { model.selected = model.progress.firstUnfinished ?? .tryIt }
+        model.selectStartingStep()
         let window = self.window ?? makeWindow()
         self.window = window
         NSApp.setActivationPolicy(.regular)

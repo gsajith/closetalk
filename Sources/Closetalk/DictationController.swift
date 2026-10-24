@@ -68,23 +68,26 @@ final class DictationController {
                 modelError = nil
                 // Checked before loading: the load itself records that the first compile happened.
                 let firstTime = !Transcriber.hasCompiledBefore
+                var loadingStarted = false
                 do {
                     try await transcriber.load { p in
                         Task { @MainActor in
-                            // A late progress report must not undo "ready".
-                            guard !self.modelReady else { return }
+                            // These tasks can run out of order, so a late download report must not
+                            // undo "loading" or "ready".
+                            guard !self.modelReady, !(loadingStarted && p != nil) else { return }
+                            if p == nil { loadingStarted = true }
                             self.loadProgress = p
-                            self.setup.setModel(p.map { .downloading(fraction: $0) }
+                            self.setup.setSpeechModel(p.map { .downloading(fraction: $0) }
                                 ?? .compiling(startedAt: Date(), firstTime: firstTime))
                             self.refreshMenu()
                         }
                     }
                     modelReady = true
-                    setup.setModel(.ready)
+                    setup.setSpeechModel(.ready)
                 } catch {
                     Self.log.error("model load failed: \(error.localizedDescription, privacy: .public)")
                     modelError = "Model failed to load, retrying in 30 s: \(error.localizedDescription)"
-                    setup.setModel(.failed(message: error.localizedDescription))
+                    setup.setSpeechModel(.failed(message: error.localizedDescription))
                     refreshMenu()
                     try? await Task.sleep(for: .seconds(30))
                 }

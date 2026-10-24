@@ -18,9 +18,22 @@ actor Transcriber {
         baseFolder.appending(path: "\(modelVariant).compiled")
     }
 
+    /// Written only after a download finishes, so an interrupted download resumes on the next try.
+    private static var downloadedMarker: URL {
+        baseFolder.appending(path: "\(modelVariant).complete")
+    }
+
+    static var isDownloaded: Bool {
+        FileManager.default.fileExists(atPath: downloadedMarker.path)
+    }
+
     /// Whether a load has finished before, so the next one won't need the long first compile.
+    /// Versions before the marker existed left only Core ML's compiled cache, so count that too.
     static var hasCompiledBefore: Bool {
-        FileManager.default.fileExists(atPath: compiledMarker.path)
+        if FileManager.default.fileExists(atPath: compiledMarker.path) { return true }
+        guard isDownloaded, let id = Bundle.main.bundleIdentifier else { return false }
+        let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: id)
+        return !((try? FileManager.default.contentsOfDirectory(atPath: cache.path))?.isEmpty ?? true)
     }
 
     /// Where WhisperKit's downloader puts this variant under baseFolder.
@@ -31,9 +44,8 @@ actor Transcriber {
     /// Downloads the model if it isn't on disk yet, then loads and warms it up.
     /// Reports download progress as 0...1 (only when a download is needed), then nil when loading starts.
     func load(progress: @escaping @Sendable (Double?) -> Void) async throws {
-        // Written only after a download finishes, so an interrupted download resumes on the next try.
-        let doneMarker = Self.baseFolder.appending(path: "\(Self.modelVariant).complete")
-        if !FileManager.default.fileExists(atPath: doneMarker.path) {
+        let doneMarker = Self.downloadedMarker
+        if !Self.isDownloaded {
             _ = try await WhisperKit.download(variant: Self.modelVariant, downloadBase: Self.baseFolder) { p in
                 progress(p.fractionCompleted)
             }
@@ -53,8 +65,10 @@ actor Transcriber {
             whisper = try await WhisperKit(config)
             FileManager.default.createFile(atPath: Self.compiledMarker.path, contents: nil)
         } catch {
-            // Likely a damaged download. Forget it was complete so the next retry downloads again.
+            // Likely a damaged download. Forget it was complete so the next retry downloads again,
+            // and compiles again after that.
             try? FileManager.default.removeItem(at: doneMarker)
+            try? FileManager.default.removeItem(at: Self.compiledMarker)
             throw error
         }
     }
