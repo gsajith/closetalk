@@ -18,9 +18,9 @@ final class MenuBarController: NSObject {
     private let accessibilityItem = NSMenuItem(
         title: "Grant Accessibility permission…", action: #selector(openAccessibilitySettings), keyEquivalent: "")
     private let microphoneItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
-    private let dictationKeyItem = NSMenuItem(title: "Dictation key", action: nil, keyEquivalent: "")
-    /// Kept so the status line can be redrawn when the dictation key changes.
-    private var state = AppState.loadingModel(progress: nil)
+    private let shortcutItem = NSMenuItem(title: "Change shortcut…", action: #selector(changeShortcut), keyEquivalent: "")
+    /// Called when someone picks Change shortcut…; DictationController opens the recorder.
+    var onChangeShortcut: (() -> Void)?
     private let loginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
 
     /// `updatesItem` is the updater's "Check for Updates…" item, placed above Quit.
@@ -36,14 +36,8 @@ final class MenuBarController: NSObject {
         menu.addItem(.separator())
         microphoneItem.submenu = NSMenu()
         menu.addItem(microphoneItem)
-        dictationKeyItem.submenu = NSMenu()
-        for key in DictationKey.allCases {
-            let item = NSMenuItem(title: key.name.capitalizedFirst, action: #selector(selectDictationKey(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = key.rawValue
-            dictationKeyItem.submenu?.addItem(item)
-        }
-        menu.addItem(dictationKeyItem)
+        shortcutItem.target = self
+        menu.addItem(shortcutItem)
         menu.addItem(loginItem)
         menu.addItem(.separator())
         menu.addItem(updatesItem)
@@ -54,12 +48,11 @@ final class MenuBarController: NSObject {
     }
 
     func update(_ state: AppState) {
-        self.state = state
         let (symbol, text, tint): (String, String, NSColor?) = switch state {
         case .loadingModel(let p?): ("arrow.down.circle", "Downloading model… \(Int(p * 100))%", nil)
         // The first load compiles the model for the Neural Engine, which can take minutes.
         case .loadingModel(nil): ("arrow.down.circle", "Loading model… (first launch can take several minutes)", nil)
-        case .idle: ("mic", "Ready. Hold \(DictationKeySettings.key.name) to dictate.", nil)
+        case .idle: ("mic", "Ready. Hold \(DictationShortcutSettings.shortcut.name) to dictate.", nil)
         case .recording: ("mic.fill", "Recording…", .systemRed)
         case .transcribing: ("waveform", "Transcribing…", nil)
         case .error(let message): ("exclamationmark.triangle", message, nil)
@@ -105,9 +98,8 @@ final class MenuBarController: NSObject {
         MicrophoneSettings.preference = choice
     }
 
-    @objc private func selectDictationKey(_ sender: NSMenuItem) {
-        DictationKeySettings.key = DictationKey(storageValue: sender.representedObject as? String)
-        update(state)
+    @objc private func changeShortcut() {
+        onChangeShortcut?()
     }
 
     @objc private func toggleLaunchAtLogin() {
@@ -126,13 +118,5 @@ extension MenuBarController: NSMenuDelegate {
         accessibilityItem.isHidden = AXIsProcessTrusted()
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         rebuildMicrophoneMenu()
-        let key = DictationKeySettings.key
-        for item in dictationKeyItem.submenu?.items ?? [] {
-            item.state = item.representedObject as? String == key.rawValue ? .on : .off
-        }
     }
-}
-
-private extension String {
-    var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 }

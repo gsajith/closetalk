@@ -55,7 +55,7 @@ The menu bar icon shows where things stand:
 | Waveform | Transcribing |
 | Warning triangle | Needs attention. Open the menu to see why. |
 
-The menu also has the microphone picker, a choice of dictation key (right ⌘, right ⌥ or fn), a launch at login toggle and Check for Updates.
+The menu also has the microphone picker, a launch at login toggle and Check for Updates. Change shortcut… records a different key or combo to hold instead of right ⌘, like fn or ⌃⌥Space.
 
 ## Troubleshooting
 

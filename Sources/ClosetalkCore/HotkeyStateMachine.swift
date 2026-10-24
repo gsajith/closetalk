@@ -1,6 +1,6 @@
 import Foundation
 
-public enum HotkeyEvent {
+public enum HotkeyEvent: Equatable {
     /// The dictation key went down or up. Timestamps are in seconds.
     case keyDown(TimeInterval)
     case keyUp(TimeInterval)

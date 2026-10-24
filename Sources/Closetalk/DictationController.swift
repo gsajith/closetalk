@@ -22,6 +22,8 @@ final class DictationController {
     private var machine = HotkeyStateMachine()
     private var spacing = SpacingPolicy()
     private var monitor: HotkeyMonitor?
+    /// Open while someone records a new shortcut.
+    private var shortcutWindow: ShortcutRecorderWindow?
     private var modelReady = false
     private var isRecording = false
     /// Bumped per recording so a late "mic is live" callback from a cancelled recording is ignored.
@@ -35,6 +37,7 @@ final class DictationController {
 
     init(menuBar: MenuBarController) {
         self.menuBar = menuBar
+        menuBar.onChangeShortcut = { [weak self] in self?.recordShortcut() }
     }
 
     func start() {
@@ -84,7 +87,7 @@ final class DictationController {
 
     /// The tap needs Accessibility. Until it's granted, retry every couple of seconds.
     private func startMonitor() {
-        let monitor = HotkeyMonitor { [weak self] event in
+        let monitor = HotkeyMonitor(shortcut: DictationShortcutSettings.shortcut) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
         }
         if monitor.start() {
@@ -93,6 +96,39 @@ final class DictationController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.startMonitor() }
         }
         refreshMenu()
+    }
+
+    /// Opens the recorder window. The event tap stops dictating and records keys until it closes.
+    private func recordShortcut() {
+        guard let monitor else { return refreshMenu() }
+        if let shortcutWindow { return shortcutWindow.show() }
+        let window = ShortcutRecorderWindow(current: DictationShortcutSettings.shortcut.name) { [weak self] in
+            // Closed without saving, or closed after saving: either way go back to the saved shortcut.
+            guard let self, shortcutWindow != nil else { return }
+            shortcutWindow = nil
+            monitor.listen(for: DictationShortcutSettings.shortcut)
+        }
+        shortcutWindow = window
+        window.show()
+        monitor.record { [weak self] step in
+            MainActor.assumeIsolated { self?.handleRecorder(step) }
+        }
+    }
+
+    private func handleRecorder(_ step: ShortcutRecorder.Step) {
+        switch step {
+        case .recording(let held): shortcutWindow?.showHeld(held)
+        case .refused: shortcutWindow?.showRefused()
+        case .cancelled: shortcutWindow?.close()
+        case .done(let shortcut):
+            DictationShortcutSettings.shortcut = shortcut
+            monitor?.listen(for: shortcut)
+            let window = shortcutWindow
+            // Cleared first so closing the window doesn't reset the listener mid-hold.
+            shortcutWindow = nil
+            window?.showSaved(shortcut.name)
+            refreshMenu()
+        }
     }
 
     private func handle(_ event: HotkeyEvent) {
