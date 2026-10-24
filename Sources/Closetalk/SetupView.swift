@@ -6,6 +6,9 @@ struct SetupView: View {
     @Bindable var model: SetupModel
     let close: () -> Void
 
+    /// The dictation shortcut as the menu names it: "right ⌘" by default.
+    private var shortcut: String { DictationShortcutSettings.shortcut.name }
+
     var body: some View {
         HStack(spacing: 0) {
             sidebar
@@ -74,7 +77,7 @@ struct SetupView: View {
 
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
-                 text: "Closetalk listens only while you hold right ⌘. Audio stays on this Mac and is never saved.") {
+                 text: "Closetalk listens only while you hold \(shortcut). Audio stays on this Mac and is never saved.") {
             if model.progress.microphoneAllowed {
                 Done("Microphone is on.")
             } else if model.microphoneDenied {
@@ -87,8 +90,8 @@ struct SetupView: View {
     }
 
     private var accessibility: some View {
-        StepPane(title: "Let Closetalk use the right ⌘ key",
-                 text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold right ⌘, and to paste what you said. Turn on Closetalk in the list.") {
+        StepPane(title: "Let Closetalk use \(shortcut)",
+                 text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold \(shortcut), and to paste what you said. Turn on Closetalk in the list.") {
             if model.progress.accessibilityAllowed {
                 Done("Accessibility is on.")
             } else {
@@ -140,7 +143,7 @@ struct SetupView: View {
 
     private var tryIt: some View {
         VStack(alignment: .leading, spacing: 12) {
-            (Text("Hold right ") + Text("⌘").bold() + Text(" and talk"))
+            (Text("Hold ") + Text(shortcut).bold() + Text(" and talk"))
                 .font(.title2.weight(.semibold))
             Text("Say anything, then let go. Your words land here, the same way they will in any app.")
                 .foregroundStyle(.secondary)
