@@ -3,6 +3,15 @@
     <channel>
         <title>Closetalk</title>
         <item>
+            <title>1.3</title>
+            <pubDate>Sat, 24 Oct 2026 02:37:31 -0400</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/gsajith/closetalk/releases/download/v1.3/Closetalk.zip" length="4849753" type="application/octet-stream" sparkle:edSignature="/j4G+l1CiAhD34PONB/rgM44Fc5HUwM6SI2nVE9rOl8+1n0gyfm2m63ft4JprbIo9xpUtjZCX1EaiSxnJI71Dw=="/>
+        </item>
+        <item>
             <title>1.2</title>
             <pubDate>Sat, 24 Oct 2026 00:57:54 -0400</pubDate>
             <sparkle:version>3</sparkle:version>
