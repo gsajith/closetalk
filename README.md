@@ -7,7 +7,7 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 ## What it does
 
 - **Push to talk on right Command.** A soft chime means the mic is live. A second chime means it stopped.
-- **Pastes where you're typing.** Your clipboard is put back two seconds later, so whatever you had copied is still there. Passwords copied from a password manager are the exception: Closetalk leaves those off the clipboard.
+- **Pastes where you're typing.** Closetalk puts your clipboard back two seconds later, so whatever you had copied is still there. If that was a password from a password manager, it stays off the clipboard.
 - **Leaves your shortcuts alone.** Right ⌘C, ⌘Tab and friends work as usual and paste nothing. A quick tap does nothing either. The mic does open for a moment when you press right Command, so you may see the orange mic dot flash.
 - **Keeps your words.** Closetalk removes "um" and "uh" and nothing else. No AI rewrite, so `foo()` and `args[0]` come through as you said them.
 - **Spaces dictations for you.** Talk in bursts and each one lands with a space before it. Typing or clicking elsewhere resets that.
@@ -22,14 +22,7 @@ It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your 
 ## Install
 
 1. Download [Closetalk.dmg](https://github.com/gsajith/closetalk/releases/latest/download/Closetalk.dmg), open it, and drag Closetalk into the Applications folder next to it.
-2. Open Closetalk from Applications.
-3. macOS will refuse to open it the first time, because I haven't paid Apple to notarize it. Open System Settings > Privacy & Security, scroll down, and click Open Anyway next to the Closetalk message. Then open the app again.
-
-If you'd rather use Terminal, this does the same thing as step 3:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/Closetalk.app
-```
+2. Open Closetalk from Applications. macOS asks whether you want to open an app downloaded from the internet. Click Open.
 
 ### Build it yourself
 
@@ -74,7 +67,7 @@ The menu also has the microphone picker and a launch at login toggle.
 
 ## Privacy
 
-Closetalk goes online for one thing: downloading the model and its tokenizer from Hugging Face on first launch. Audio, transcripts and clipboard contents stay on your Mac. Audio is held in memory only while you're dictating and is never written to disk.
+Closetalk goes online for one thing: downloading the model and its tokenizer from Hugging Face on first launch. Audio, transcripts and clipboard contents stay on your Mac. Closetalk keeps audio in memory only while you're dictating and never writes it to disk.
 
 ## For developers
 
@@ -91,7 +84,7 @@ The log shows how long each mic took to go live and how long each transcription 
 
 ### Notarized builds
 
-Release builds are signed with a Developer ID certificate and notarized by Apple, so they open without the Open Anyway step. You need an Apple Developer Program membership. Save your notarization login once:
+Release builds carry a Developer ID signature and Apple's notarization, so macOS opens them without blocking. You need an Apple Developer Program membership to make one. Save your notarization login once:
 
 ```sh
 xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
@@ -112,15 +105,15 @@ scripts/package.sh
 scripts/notarize.sh build/Closetalk.dmg
 ```
 
-Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed (see Updates below). Review the notes, publish the release, and merge the feed changes it lists through a PR. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
+Finally it creates a draft GitHub release with `Closetalk.dmg` and `Closetalk.zip`, then adds the update to the feed described under Updates. Review the notes, publish the release, and merge the feed changes it lists through a PR. Apple usually answers within a few minutes. If it rejects a submission, the script prints Apple's log and stops.
 
 Self-signed builds turn off hardened runtime's library validation, because macOS only loads Sparkle.framework from the same Apple Team ID and a self-signed certificate has none. Developer ID builds keep it on.
 
 ### Updates
 
-Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](https://sparkle-project.org), and from Check for Updates in the menu. Sparkle installs an update only when it's signed with the private key in the login keychain, which matches `SUPublicEDKey` in `Resources/Info.plist`.
+Closetalk checks `https://closetalk.dev/appcast.xml` once a day with [Sparkle](https://sparkle-project.org), and from Check for Updates in the menu. Sparkle installs an update only if its signature matches `SUPublicEDKey` in `Resources/Info.plist`. The matching private key lives in the login keychain.
 
-For each release, bump `CFBundleVersion` in `Resources/Info.plist`. Sparkle compares that number, not the version string. `scripts/release.sh` adds the release zip to the appcast like this:
+Sparkle compares `CFBundleVersion`, not the version string, so every release needs a higher one. `scripts/release.sh` adds the release zip to the appcast like this:
 
 ```sh
 cp build/Closetalk.zip site/public/Closetalk-<version>.zip
