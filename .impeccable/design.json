@@ -200,7 +200,7 @@
       "inkFilter": "#ink in site/app/layout.tsx: fractal-noise displacement (baseFrequency 0.035, scale 2) roughens edges, then a 1.1 frequency grain mask knocks paper specks out of solids. For type and small solids.",
       "floodFilter": "#flood in site/app/layout.tsx: slow anisotropic mottle (0.006 0.018) holds density at 92% or more, plus sparse specks. For large ink fills.",
       "paper": "site/public/paper.jpg, a 1300px seamless uncoated plate tiled at 1x over the paper color.",
-      "art": "site/public/mic-ink.jpg, the two-ink Riso mic with paper divided out, composited with multiply. The icon and cover use the same art family (assets/src/icon-art.jpg, cover-art.jpg)."
+      "art": "site/public/mic-ink.webp, the two-ink Riso mic with the paper made transparent by color-to-alpha, so it composites over the paper plate with no blend mode (a multiply blend on an SVG image was unreliable across browsers). The icon and cover use the same art family (assets/src/icon-art.jpg, cover-art.jpg)."
     },
     "surfaces": [
       "site/app (closetalk.dev landing and /privacy)",
@@ -230,16 +230,16 @@
       "kind": "nav",
       "refersTo": "wordmark",
       "description": "Two-plate wordmark and 600-weight links printed straight onto the paper.",
-      "html": "<header class=\"ds-masthead\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-plate ds-plate-pink\" aria-hidden=\"true\">Closetalk</span><span class=\"ds-plate ds-plate-blue\">Closetalk</span></a><nav><a href=\"#\">Questions</a><a href=\"#\">Privacy</a><a href=\"#\">GitHub</a></nav></header>",
-      "css": ".ds-masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 20px; background: var(--paper, #f2eadf); color: var(--purple, #4a147d); font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; } .ds-wordmark { position: relative; display: inline-block; text-decoration: none; font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; } .ds-plate { mix-blend-mode: multiply; white-space: nowrap; } .ds-plate-pink { position: absolute; left: 0; top: 0; color: var(--pink, #ed269d); transform: translate(-3px, 2px); } .ds-plate-blue { position: relative; color: var(--blue, #1c81c3); } .ds-wordmark:hover .ds-plate-pink { transform: translate(-5px, 3px); } .ds-masthead nav { display: flex; gap: 22px; font-weight: 600; font-size: 16px; } .ds-masthead nav a { color: inherit; text-decoration: underline 2px transparent; text-underline-offset: 4px; } .ds-masthead nav a:hover { text-decoration-color: var(--pink, #ed269d); } .ds-masthead a:focus-visible { outline: 3px solid var(--blue, #1c81c3); outline-offset: 3px; border-radius: 4px; }"
+      "html": "<header class=\"ds-masthead\"><a class=\"ds-wordmark ds-print-plate\" data-print=\"Closetalk\" href=\"#\"><span>Closetalk</span></a><nav><a href=\"#\">Questions</a><a href=\"#\">Privacy</a><a href=\"#\">GitHub</a></nav></header>",
+      "css": ".ds-masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 20px; background: var(--paper, #f2eadf); color: var(--purple, #4a147d); font-family: \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; } .ds-masthead nav { display: flex; gap: 22px; font-weight: 600; font-size: 16px; } .ds-masthead nav a { color: inherit; text-decoration: none; } .ds-wordmark { position: relative; display: inline-block; white-space: nowrap; font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; text-decoration: none; } .ds-print-plate::before { content: attr(data-print) / \"\"; position: absolute; inset: 0; color: var(--pink, #ed269d); transform: translate(-3px, 2px); mix-blend-mode: multiply; } .ds-print-plate > span { position: relative; display: block; color: var(--blue, #1c81c3); mix-blend-mode: multiply; }"
     },
     {
       "name": "Printed heading",
       "kind": "custom",
       "refersTo": "headline",
       "description": "Section heading set twice in one box, pink plate offset under blue, multiplied.",
-      "html": "<h2 class=\"ds-print\"><span class=\"ds-ink-pink\" aria-hidden=\"true\">Hold, talk, let go.</span><span class=\"ds-ink-blue\">Hold, talk, let go.</span></h2>",
-      "css": ".ds-print { position: relative; margin: 0; font: 800 clamp(32px, 4.2vw, 54px)/1.04 \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; letter-spacing: -0.035em; } .ds-print span { display: block; mix-blend-mode: multiply; } .ds-ink-pink { position: absolute; inset: 0; color: var(--pink, #ed269d); transform: translate(-3px, 2px); } .ds-ink-blue { position: relative; color: var(--blue, #1c81c3); }"
+      "html": "<h2 class=\"ds-print\" data-print=\"Hold, talk, let go.\"><span>Hold, talk, let go.</span></h2>",
+      "css": ".ds-print { position: relative; margin: 0; font: 800 clamp(32px, 4.2vw, 54px)/1.04 \"Bricolage Grotesque\", var(--font-bricolage), \"Helvetica Neue\", Arial, sans-serif; letter-spacing: -0.035em; } .ds-print::before { content: attr(data-print) / \"\"; position: absolute; inset: 0; color: var(--pink, #ed269d); transform: translate(-3px, 2px); mix-blend-mode: multiply; } .ds-print > span { position: relative; display: block; color: var(--purple, #4a147d); mix-blend-mode: multiply; }"
     },
     {
       "name": "Diagram callout",

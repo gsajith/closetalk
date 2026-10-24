@@ -160,7 +160,7 @@ Paper plus two fluorescent Riso inks; every other color is the result of those i
 
 ### Hierarchy
 - **Display** (800, clamp 38px to 62px, line-height 1.02, -0.035em): the hero headline only, capped at 22ch, printed through `#ink`.
-- **Headline** (800, clamp 32px to 54px, line-height 1.04, -0.035em): section headings, printed in two plates.
+- **Headline** (800, clamp 32px to 54px, line-height 1.04, -0.035em): section headings, printed in two plates with the text plate in purple, which reads better than blue at display size.
 - **Wordmark** (800, 34px, line-height 1, -0.04em): the masthead "Closetalk", always two plates. The cover scales it to 118px with a proportionally larger offset.
 - **Title** (800, clamp 17px to 23px in container units, line-height 1.15, -0.02em): diagram callout titles. Prose pages use a fixed 24px variant for subheads.
 - **Question** (700, 21px, -0.01em): FAQ summaries.
@@ -189,7 +189,7 @@ Sections open with 104px of space above (80px below 900px). The argument section
 The web surfaces have no shadows. Depth comes from print physics: plates multiplied over each other, a pink plate offset under a blue one, tint and flood plates rotated a fraction of a degree, and the paper texture under everything. The app icon is the one exception. It carries the soft drop shadow from Apple's macOS icon grid (`0 10px 14px rgba(0, 0, 0, 0.3)`), a platform convention.
 
 ### Named Rules
-**The Misregistration Rule.** A two-plate print offsets its pink plate 3px left and 2px down from the blue plate (at 34px to 62px type; scale it with size, as the cover does at 118px with 5px and 4px). This is ink, not a shadow. Hover may pull the plates toward register (the Download button closes to 1px, then 0 on press; the wordmark drifts apart to 5px and 3px).
+**The Misregistration Rule.** A two-plate print offsets its pink plate 3px left and 2px down from the text plate (at 34px to 62px type; scale it with size, as the cover does at 118px with 5px and 4px). This is ink, not a shadow. Hover may pull the plates toward register (the Download button closes to 1px, then 0 on press; the wordmark drifts apart to 5px and 3px).
 
 **The Crooked Sheet Rule.** Tint and flood plates sit slightly rotated, between -0.6deg and 0.5deg, like a hand-fed sheet. Type plates stay square.
 
@@ -214,7 +214,7 @@ Inherit their text color with a 2px blue underline offset 4px; hover turns the u
 The masthead puts the two-plate wordmark on the left and a row of 600-weight, 16px links on the right, ending in the compact Download tab. No bar, no background, no border: it prints straight onto the paper.
 
 ### Printed heading
-Section headings render twice in one box. The pink copy is absolutely positioned, offset, and hidden from screen readers; the blue copy is in flow. Both pass through `#ink` and multiply, so they wrap identically and overprint purple where they meet.
+Section headings and the wordmark carry their text once, in a `span`. The pink plate is a `::before` drawn from a `data-print` attribute with `content: attr(data-print) / ""`, so crawlers and screen readers read the text once. Both plates pass through `#ink` and multiply, so they wrap identically and overprint where they meet. Section headings set the text plate in purple; the wordmark keeps it blue.
 
 ### Diagram callout (signature)
 The hero's leader-line diagram. Each callout pairs a Title and a body in Thin Purple, set to the left or right of the art at 30% width, right-aligned on the left side. A blue polyline runs from a pin on the art to the callout's title. Hovering a callout, or the matching real-world gesture, sets the line, pin and title to pink and thickens the line from 1.75px to 3px over 160ms.
@@ -237,7 +237,8 @@ Motion stays small and physical: plates sliding toward register, ink color shift
 ## Do's and Don'ts
 
 ### Do:
-- **Do** print headings, the wordmark and primary actions as two plates, pink offset 3px left and 2px down under blue, both multiplied.
+- **Do** print headings, the wordmark and primary actions as two plates, pink offset 3px left and 2px down under the text plate (purple for headings, blue for the wordmark and Download), both multiplied.
+- **Do** draw the pink plate of printed type from a data attribute, never as a second copy of the text in the HTML.
 - **Do** set reading text in Overprint Purple (purple) and secondary text in Thin Purple (purple-2) on Uncoated Paper.
 - **Do** run large ink fills through `#flood` and type or small solids through `#ink`, so solids show grain.
 - **Do** knock text out of ink plates to Bright Paper (paper-light).
