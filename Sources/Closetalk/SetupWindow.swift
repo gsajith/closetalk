@@ -220,7 +220,8 @@ final class SetupModel {
                 waiting.remove(step)
             }
             try? await Task.sleep(for: .seconds(1))
-            guard isWindowOpen, selected == step, let next = progress.nextUnfinished(after: step) else { return }
+            // Try it stays put, so the person can read what they dictated.
+            guard isWindowOpen, selected == step, step != .tryIt, let next = progress.nextUnfinished(after: step) else { return }
             go(to: next)
         }
     }
