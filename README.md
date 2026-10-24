@@ -90,7 +90,7 @@ The log shows how long each mic took to go live and how long each transcription 
 
 ### Notarized builds
 
-Release builds carry a Developer ID signature and Apple's notarization, so macOS opens them without blocking. You need an Apple Developer Program membership to make one. Save your notarization login once:
+Release builds carry a Developer ID signature and Apple's notarization, so macOS opens them without blocking. You need an Apple Developer Program membership to make one, and [uv](https://docs.astral.sh/uv/) (`brew install uv`), which runs dmgbuild to lay out the DMG window. Save your notarization login once:
 
 ```sh
 xcrun notarytool store-credentials notary --apple-id <Apple ID> --team-id <Team ID>
