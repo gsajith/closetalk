@@ -7,8 +7,8 @@ struct SetupView: View {
     let close: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// The dictation shortcut as the menu names it: "right ⌘" by default.
-    private var shortcut: String { DictationShortcutSettings.shortcut.name }
+    /// The saved dictation shortcut as the menu names it, like "fn" or "⌃⌥Space".
+    private var shortcut: String { DictationShortcutSettings.shortcut?.name ?? "your shortcut" }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -86,6 +86,7 @@ struct SetupView: View {
         switch model.selected {
         case .microphone: microphone
         case .accessibility: accessibility
+        case .shortcut: shortcutStep
         case .model: speechModel
         case .tryIt: tryIt
         }
@@ -93,7 +94,7 @@ struct SetupView: View {
 
     private var microphone: some View {
         StepPane(title: "Let Closetalk hear you",
-                 text: "Closetalk listens only while you hold \(shortcut). Audio stays on this Mac and is never saved.") {
+                 text: "Closetalk listens only while you hold your shortcut. Audio stays on this Mac and is never saved.") {
             PermissionButton(model.microphoneDenied ? "Open System Settings" : "Allow Microphone",
                              doneTitle: "Microphone is on", state: permissionState(.microphone),
                              action: model.allowMicrophone)
@@ -104,8 +105,8 @@ struct SetupView: View {
     }
 
     private var accessibility: some View {
-        StepPane(title: "Let Closetalk use \(shortcut)",
-                 text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold \(shortcut), and to paste what you said. Turn on Closetalk in the list.") {
+        StepPane(title: "Let Closetalk see your shortcut",
+                 text: "macOS calls this Accessibility. Closetalk uses it to notice when you hold your shortcut, and to paste what you said. Turn on Closetalk in the list.") {
             PermissionButton("Open System Settings", doneTitle: "Accessibility is on",
                              state: permissionState(.accessibility), action: model.openAccessibilitySettings)
         }
@@ -116,6 +117,32 @@ struct SetupView: View {
         if model.showsDone(step) { return .done }
         if model.waiting.contains(step) || model.progress.isDone(step) { return .waiting }
         return .ready
+    }
+
+    private var shortcutStep: some View {
+        StepPane(title: "Choose your shortcut",
+                 text: "Hold it to talk, let go to paste. Pick a key you don't type with, like fn or right ⌘, or a combo like ⌃⌥Space.") {
+            if model.recordingShortcut {
+                // The event tap does the listening, so this only shows what it hears.
+                Text(model.heldKeys.isEmpty ? "Press your shortcut…" : model.heldKeys)
+                    .font(.title3.weight(.semibold))
+                    .frame(minWidth: 220, minHeight: 36)
+                    .background(.background, in: .rect(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor))
+                if model.shortcutRefused {
+                    Text("That key needs ⌃, ⌥ or ⌘ with it, or it would stop typing.")
+                        .font(.callout).foregroundStyle(.red)
+                } else {
+                    Note("Modifier keys work on their own. Other keys need ⌃, ⌥ or ⌘. Esc cancels.")
+                }
+                Button("Cancel", action: model.cancelRecordingShortcut)
+            } else if model.showsDone(.shortcut) {
+                Done("Hold \(shortcut) to dictate.")
+                Button("Change Shortcut", action: model.recordShortcut)
+            } else {
+                Button("Record Shortcut", action: model.recordShortcut).buttonStyle(.borderedProminent)
+            }
+        }
     }
 
     @ViewBuilder private var speechModel: some View {
@@ -279,6 +306,7 @@ extension SetupStep {
         switch self {
         case .microphone: "Microphone"
         case .accessibility: "Accessibility"
+        case .shortcut: "Shortcut"
         case .model: "Speech model"
         case .tryIt: "Try it"
         }

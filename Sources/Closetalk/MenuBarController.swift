@@ -54,7 +54,7 @@ final class MenuBarController: NSObject {
         case .loadingModel(let p?): ("arrow.down.circle", "Downloading model… \(Int(p * 100))%", nil)
         // The first load compiles the model for the Neural Engine, which can take minutes.
         case .loadingModel(nil): ("arrow.down.circle", "Loading model… (first launch can take several minutes)", nil)
-        case .idle: ("mic", "Ready. Hold \(DictationShortcutSettings.shortcut.name) to dictate.", nil)
+        case .idle: ("mic", "Ready. Hold \(DictationShortcutSettings.shortcut?.name ?? "your shortcut") to dictate.", nil)
         case .recording: ("mic.fill", "Recording…", .systemRed)
         case .transcribing: ("waveform", "Transcribing…", nil)
         case .error(let message): ("exclamationmark.triangle", message, nil)

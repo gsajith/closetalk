@@ -2,7 +2,7 @@ import Foundation
 
 /// The steps of the first-launch window, in sidebar order.
 public enum SetupStep: Int, CaseIterable, Sendable {
-    case microphone, accessibility, model, tryIt
+    case microphone, accessibility, shortcut, model, tryIt
 }
 
 /// Where the speech model is in its one-time setup.
@@ -20,13 +20,16 @@ public enum ModelSetup: Equatable, Sendable {
 public struct SetupProgress: Equatable, Sendable {
     public var microphoneAllowed: Bool
     public var accessibilityAllowed: Bool
+    /// A dictation shortcut is saved.
+    public var shortcutChosen: Bool
     public var model: ModelSetup
     /// The practice field received a dictation.
     public var triedIt: Bool
 
-    public init(microphoneAllowed: Bool, accessibilityAllowed: Bool, model: ModelSetup, triedIt: Bool) {
+    public init(microphoneAllowed: Bool, accessibilityAllowed: Bool, shortcutChosen: Bool, model: ModelSetup, triedIt: Bool) {
         self.microphoneAllowed = microphoneAllowed
         self.accessibilityAllowed = accessibilityAllowed
+        self.shortcutChosen = shortcutChosen
         self.model = model
         self.triedIt = triedIt
     }
@@ -35,15 +38,20 @@ public struct SetupProgress: Equatable, Sendable {
         switch step {
         case .microphone: microphoneAllowed
         case .accessibility: accessibilityAllowed
+        case .shortcut: shortcutChosen
         case .model: model == .ready
         case .tryIt: triedIt
         }
     }
 
-    /// Try it needs everything else first; the other steps can be done in any order.
+    /// Recording a shortcut listens through the event tap, which needs Accessibility. Try it needs
+    /// everything else. The other steps can be done in any order.
     public func isAvailable(_ step: SetupStep) -> Bool {
-        guard step == .tryIt else { return true }
-        return microphoneAllowed && accessibilityAllowed && model == .ready
+        switch step {
+        case .shortcut: accessibilityAllowed
+        case .tryIt: microphoneAllowed && accessibilityAllowed && shortcutChosen && model == .ready
+        default: true
+        }
     }
 
     public var firstUnfinished: SetupStep? {

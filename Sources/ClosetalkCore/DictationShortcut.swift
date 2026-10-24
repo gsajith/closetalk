@@ -55,8 +55,6 @@ public enum DictationShortcut: Codable, Equatable {
     /// A key with modifiers, like ⌃⌥Space. Either side of a modifier counts.
     case key(code: Int64, label: String, modifiers: Set<ModifierKey>)
 
-    public static let `default` = DictationShortcut.modifiers([.rightCommand])
-
     /// How the menu names the shortcut: "right ⌘", "right ⌥ + right ⌘", "⌃⌥Space".
     public var name: String {
         switch self {
@@ -69,8 +67,11 @@ public enum DictationShortcut: Codable, Equatable {
         }
     }
 
-    public init(storageData: Data?) {
-        self = storageData.flatMap { try? JSONDecoder().decode(Self.self, from: $0) } ?? .default
+    /// Nil when nothing is stored yet, or what's stored can't be read. There's no built-in default:
+    /// setup asks people to choose.
+    public init?(storageData: Data?) {
+        guard let storageData, let shortcut = try? JSONDecoder().decode(Self.self, from: storageData) else { return nil }
+        self = shortcut
     }
 
     public var storageData: Data {

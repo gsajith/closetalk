@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var setup: SetupWindowController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        DictationShortcutSettings.keepRightCommandForUpgrades()
         updater = Updater()
         setup = SetupWindowController()
         menuBar = MenuBarController(updatesItem: updater.menuItem, openSetup: { [weak self] in self?.setup.show() })
@@ -15,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dictation.start()
         // The window asks for both permissions and explains the one-time model compile, so it opens
         // on a first launch and whenever a permission has gone missing.
-        setup.model.refreshPermissions()
+        setup.model.refreshStatus()
         if setup.model.needsSetup { setup.show() }
     }
 

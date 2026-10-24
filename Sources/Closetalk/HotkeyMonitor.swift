@@ -11,7 +11,8 @@ let syntheticEventTag: Int64 = 0x4C57
 /// so it must never wait on the main thread (e.g. while the mic starts).
 final class HotkeyMonitor {
     private enum Mode {
-        case listening(ShortcutMatcher)
+        /// Nil until a shortcut is chosen: keys still count as other input, but nothing dictates.
+        case listening(ShortcutMatcher?)
         case recording(ShortcutRecorder, onStep: (ShortcutRecorder.Step) -> Void)
     }
 
@@ -29,9 +30,9 @@ final class HotkeyMonitor {
     private var mode: Mode
     private let lock = NSLock()
 
-    init(shortcut: DictationShortcut, onEvent: @escaping (HotkeyEvent) -> Void) {
+    init(shortcut: DictationShortcut?, onEvent: @escaping (HotkeyEvent) -> Void) {
         self.onEvent = onEvent
-        mode = .listening(ShortcutMatcher(shortcut: shortcut))
+        mode = .listening(shortcut.map(ShortcutMatcher.init))
     }
 
     /// Returns false when the tap can't be created, which means Accessibility isn't granted yet.
@@ -67,8 +68,8 @@ final class HotkeyMonitor {
     }
 
     /// Listens for `shortcut` from the next key press on, ending any recording.
-    func listen(for shortcut: DictationShortcut) {
-        lock.withLock { mode = .listening(ShortcutMatcher(shortcut: shortcut)) }
+    func listen(for shortcut: DictationShortcut?) {
+        lock.withLock { mode = .listening(shortcut.map(ShortcutMatcher.init)) }
     }
 
     /// Records the next shortcut pressed anywhere. `onStep` runs on the main thread. On done or cancelled
@@ -108,19 +109,23 @@ final class HotkeyMonitor {
             let characters = type == .keyDown ? NSEvent(cgEvent: event)?.charactersIgnoringModifiers : nil
             let step = recorder.handle(input, characters: characters)
             switch step {
-            case .done, .cancelled: mode = .listening(ShortcutMatcher(shortcut: DictationShortcutSettings.shortcut))
+            case .done, .cancelled: mode = .listening(DictationShortcutSettings.shortcut.map(ShortcutMatcher.init))
             case .recording, .refused: mode = .recording(recorder, onStep: onStep)
             }
             DispatchQueue.main.async { onStep(step) }
             // Keys pressed while recording are meant for the recorder, not the app in front.
             return type == .keyDown || type == .keyUp
 
-        case .listening(var matcher):
+        case .listening(let current):
             if type != .flagsChanged && event.getIntegerValueField(.eventTargetUnixProcessID) == Self.ownPID {
                 // Clicks and keys in our own menu can't move the cursor in the app being dictated into.
                 return false
             }
             if let input {
+                guard var matcher = current else {
+                    if case .keyDown = input { emit(.otherInput) }
+                    return false
+                }
                 let output = matcher.handle(input, at: Self.now)
                 mode = .listening(matcher)
                 if let hotkeyEvent = output.event { emit(hotkeyEvent) }
@@ -144,7 +149,7 @@ final class HotkeyMonitor {
     private func resyncAfterTapWasOff() {
         lock.lock()
         defer { lock.unlock() }
-        guard case .listening(var matcher) = mode else { return }
+        guard case .listening(var matcher?) = mode else { return }
         let flags = CGEventSource.flagsState(.combinedSessionState).rawValue
         var events = [matcher.handle(.flagsChanged(flags: flags), at: Self.now).event]
         if case .key(let code, _, _) = matcher.shortcut,
