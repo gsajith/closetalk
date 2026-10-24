@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/cover.jpg" alt="Closetalk: talk to your agents like they're sitting next to you" width="100%"></p>
 
-[Closetalk](https://closetalk.dev) is push-to-talk dictation for your Mac. Hold the right Command key, say what you want, and let go. About a second later the text appears wherever your cursor is: a terminal, VS Code, Claude Code, Slack, a browser.
+[Closetalk](https://closetalk.dev) ([closetalk.dev](https://closetalk.dev)) is push-to-talk dictation for your Mac. Hold the right Command key, say what you want, and let go. About a second later the text appears wherever your cursor is: a terminal, VS Code, Claude Code, Slack, a browser.
 
 It runs OpenAI's Whisper large-v3 turbo model on your Mac's Neural Engine. Your voice never leaves the machine, there's no account, and it costs nothing. I built it as a free stand-in for Superwhisper and Wispr Flow, mostly for talking to coding agents.
 
