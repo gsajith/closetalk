@@ -17,6 +17,10 @@ final class DictationController {
     private static let maxRecordingLength: TimeInterval = 5 * 60
     /// Just past HotkeyStateMachine's quick-tap window (0.2 s), so a tap never shows the island.
     private static let islandDelay: TimeInterval = 0.25
+    /// The live preview transcribes about once a second, from the last 30 s of audio: one Whisper
+    /// window, so every pass costs the same however long the recording runs.
+    private static let previewInterval: Duration = .seconds(1)
+    private static let previewSeconds = 30
 
     private let menuBar: MenuBarController
     private let setup: SetupModel
@@ -39,6 +43,8 @@ final class DictationController {
     private var recordingTimeout: DispatchWorkItem?
     /// Transcriptions run one at a time, in order, so back-to-back dictations paste in the order spoken.
     private var lastTranscription: Task<Void, Never>?
+    /// Runs while recording, see startPreviews(id:).
+    private var previewTask: Task<Void, Never>?
 
     init(menuBar: MenuBarController, setup: SetupModel) {
         self.menuBar = menuBar
@@ -118,6 +124,8 @@ final class DictationController {
                 }
             }
             refreshMenu()
+            // After the full model, so dictation doesn't wait on it.
+            await transcriber.loadPreviewModel()
         }
     }
 
@@ -184,6 +192,7 @@ final class DictationController {
                     self?.island.model.levels.append(rms: rms)
                 })
                 isRecording = true
+                startPreviews(id: id)
                 // Shown once the key has been held past a quick tap, so taps and shortcuts don't flash it.
                 DispatchQueue.main.asyncAfter(deadline: .now() + Self.islandDelay) { [weak self] in
                     guard let self, self.isRecording, self.recordingID == id else { return }
@@ -205,22 +214,28 @@ final class DictationController {
             _ = recorder.stop()
             isRecording = false
             recordingTimeout?.cancel()
+            previewTask?.cancel()
+            // A transcription still running from before shows its dots, without these words.
+            if pendingTranscriptions > 0 { island.model.transcript = nil }
             settleIsland()
         case .finishRecording:
             guard isRecording else { return }
             let samples = recorder.stop()
             isRecording = false
             recordingTimeout?.cancel()
+            previewTask?.cancel()
             Self.play(Self.stopSound)
-            if samples.count >= Self.minimumSamples { transcribe(samples) }
+            if samples.count >= Self.minimumSamples { transcribe(samples, after: previewTask) }
             settleIsland()
         }
         refreshMenu()
     }
 
-    private func transcribe(_ samples: [Float]) {
+    /// Waits for `preview`, cancelled by now, so the full pass never shares the Neural Engine with it.
+    private func transcribe(_ samples: [Float], after preview: Task<Void, Never>?) {
         pendingTranscriptions += 1
         lastTranscription = Task { [previous = lastTranscription, transcriber] in
+            await preview?.value
             await previous?.value
             let started = ProcessInfo.processInfo.systemUptime
             var raw = ""
@@ -243,6 +258,30 @@ final class DictationController {
             }
             settleIsland()
             refreshMenu()
+        }
+    }
+
+    /// Shows the words in the island as they come, by transcribing the recent audio with the small model
+    /// about once a second until the recording ends. The paste still comes from transcribing the whole
+    /// recording on release, so preview mistakes never land in the app.
+    private func startPreviews(id: Int) {
+        previewTask = Task { [weak self, previous = previewTask] in
+            // A cancelled recording's preview may still be finishing a step. Waiting for it here means
+            // a final pass that waits for this task never overlaps either.
+            await previous?.value
+            while true {
+                // Throws when cancelled, which the check below catches.
+                try? await Task.sleep(for: Self.previewInterval)
+                guard let self, !Task.isCancelled, self.isRecording, self.recordingID == id else { return }
+                // An earlier dictation still transcribing has the Neural Engine to itself.
+                guard self.pendingTranscriptions == 0 else { continue }
+                let audio = self.recorder.recentSamples(seconds: Self.previewSeconds)
+                guard audio.count >= Self.minimumSamples else { continue }
+                let raw = (try? await self.transcriber.transcribePreview(audio)) ?? ""
+                guard !Task.isCancelled else { return }
+                // Silence and Whisper's stock phrases clean to nil, and keep the last words up.
+                if let text = TranscriptCleaner.clean(raw) { self.island.model.transcript = text }
+            }
         }
     }
 
