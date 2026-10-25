@@ -61,8 +61,12 @@ final class RecordingIsland {
     func hide() {
         guard model.isVisible else { return }
         model.isVisible = false
-        // Let the pill animate out before the panel goes.
-        let work = DispatchWorkItem { [panel] in panel.orderOut(nil) }
+        // Let the pill animate out before the panel goes. The words go with it, so the next recording
+        // fades in as the pill instead of shrinking from the wide panel.
+        let work = DispatchWorkItem { [panel, model] in
+            panel.orderOut(nil)
+            model.transcript = nil
+        }
         hideWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
     }

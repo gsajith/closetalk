@@ -269,11 +269,9 @@ final class DictationController {
             // A cancelled recording's preview may still be finishing a step. Waiting for it here means
             // a final pass that waits for this task never overlaps either.
             await previous?.value
-            var next = ContinuousClock.now
             while true {
-                next += Self.previewInterval
                 // Throws when cancelled, which the check below catches.
-                try? await Task.sleep(until: next)
+                try? await Task.sleep(for: Self.previewInterval)
                 guard let self, !Task.isCancelled, self.isRecording, self.recordingID == id else { return }
                 // An earlier dictation still transcribing has the Neural Engine to itself.
                 guard self.pendingTranscriptions == 0 else { continue }
